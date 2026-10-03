@@ -7,7 +7,8 @@
     "lint:fix": "prettier \"**/*.{js,ts,json}\" -w"
   },
   "dependencies": {
-    "@anchor-lang/core": "^1.1.2"
+    "@anchor-lang/core": "^1.1.2",
+    "@reclaimprotocol/zk-fetch": "1.1.0"
   },
   "devDependencies": {
     "@noble/curves": "1.9.7",
