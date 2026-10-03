@@ -250,7 +250,7 @@ export function planMilestone(
       plan.progress = 0.04;
       plan.node = "decided";
       plan.releaseReady = true;
-      plan.sentence = "The review time is over. Nobody needs to approve: anyone can release this payment now.";
+      plan.sentence = null; // The release moment below says it, large.
       plan.move = {
         priority: 100,
         release: true,
