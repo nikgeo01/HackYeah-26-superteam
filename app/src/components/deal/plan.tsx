@@ -32,6 +32,8 @@ export interface Move {
   hint?: ReactNode;
   /** True when the action lives in the release moment of the row, not in portable buttons. */
   release?: boolean;
+  /** Only this viewer can do it (deliver, approve or object, vote). */
+  personal?: boolean;
 }
 
 export interface NextEvent {
@@ -190,6 +192,7 @@ export function planMilestone(
       plan.actions.push("deliver");
       plan.move = {
         priority: 80,
+        personal: true,
         text: `Deliver milestone ${n}.`,
         hint: <>Due in {when(m.submitDeadline, now)}. When you deliver, the client's review time starts.</>,
       };
@@ -264,6 +267,7 @@ export function planMilestone(
       plan.actions.push("approve", "object");
       plan.move = {
         priority: 90,
+        personal: true,
         text: `Milestone ${n} was delivered. Approve and pay, or raise an objection.`,
         hint: <>If you do nothing, the freelancer is paid in {when(m.reviewDeadline, now)}.</>,
       };
@@ -284,6 +288,7 @@ export function planMilestone(
       plan.actions.push("vote");
       plan.move = {
         priority: 90,
+        personal: true,
         text: `The client objected to milestone ${n}. Side with the freelancer or with the client.`,
         hint: <>Voting ends in {when(m.voteDeadline, now)}. Two votes decide.</>,
       };
