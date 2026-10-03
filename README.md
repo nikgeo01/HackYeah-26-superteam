@@ -41,7 +41,7 @@ Full version, including what we still trust and why: [`docs/DESIGN_RATIONALE.md`
 
 | What | Link |
 |---|---|
-| Hosted demo | TODO(link: hosted demo URL) |
+| Hosted demo | https://nikgeo01.github.io/HackYeah-26-superteam/ (demo mode: pick a role in the header) |
 | Program ID (devnet) | `A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer` |
 | Program on Solana Explorer | https://explorer.solana.com/address/A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer?cluster=devnet |
 | Demo video (max 3 minutes) | TODO(link: YouTube unlisted URL) |
