@@ -18,10 +18,14 @@ export type SpecOrBuilder = TxSpec | (() => Promise<TxSpec>);
 export interface UseTx {
   /** Sends one transaction. Resolves to the signature, or null on failure (the toast shows why). */
   send: (label: string, spec: SpecOrBuilder) => Promise<string | null>;
-  /** Signs several transactions in one prompt and sends them in order. Null on failure. */
+  /**
+   * Signs several transactions in one prompt and sends them in order. Null on failure.
+   * `onConfirmed` runs as each transaction confirms (for live step status).
+   */
   sendAll: (
     label: string,
     specs: TxSpec[] | (() => Promise<TxSpec[]>),
+    onConfirmed?: (signature: string, index: number) => void,
   ) => Promise<string[] | null>;
   /** True while a send started by this hook is in flight. */
   busy: boolean;
@@ -86,14 +90,19 @@ export function useTx(): UseTx {
   );
 
   const sendAll = useCallback(
-    (label: string, specs: TxSpec[] | (() => Promise<TxSpec[]>)) =>
+    (
+      label: string,
+      specs: TxSpec[] | (() => Promise<TxSpec[]>),
+      onConfirmed?: (signature: string, index: number) => void,
+    ) =>
       run(
         label,
         async (id) => {
           const resolved = typeof specs === "function" ? await specs() : specs;
-          return sendAllSequential(connection, actor!, resolved, (sig) =>
-            toasts.addSignature(id, sig),
-          );
+          return sendAllSequential(connection, actor!, resolved, (sig, i) => {
+            toasts.addSignature(id, sig);
+            onConfirmed?.(sig, i);
+          });
         },
         (sigs) => sigs,
       ),
