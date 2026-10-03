@@ -10,9 +10,9 @@ authority until `--final`.
 
 ## SOL budget
 
-Rent is 5,080 lamports per byte. Allocating 450,000 bytes costs about 3.1 SOL of
+Rent is 5,080 lamports per byte. Allocating 400,000 bytes costs about 2.0 SOL of
 rent, and a deploy or upgrade temporarily needs a buffer of the binary's size
-(about 2.6 SOL for the current binary, refunded afterwards). Keep at least 6 SOL
+(about 1.9 SOL for the current binary, refunded afterwards). Keep at least 4.5 SOL
 in the deployer wallet before deploying.
 
 Faucets: https://faucet.solana.com (sign in with GitHub for a higher limit), or
@@ -25,7 +25,7 @@ solana config set -u devnet
 anchor build
 solana program deploy target/deploy/milestone_escrow.so \
   --program-id target/deploy/milestone_escrow-keypair.json \
-  --max-len 450000 -u devnet
+  --max-len 400000 -u devnet
 solana program show A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer -u devnet
 ```
 
@@ -51,3 +51,10 @@ solana program show A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer -u devnet
 ```
 
 This is irreversible and the program's rent can never be reclaimed afterwards.
+
+## Deployment log
+
+| When | What | Result |
+|---|---|---|
+| 2026-10-03 14:45 | First deploy, `--max-len 400000` | [tx](https://explorer.solana.com/tx/4d6kyW1uJov9j96CoCNS8mppB9Mm696SZBd7BngfAc5FdqkTTy3UTtkzcTucm3RovLYDz3nEhzikGCWzh498nPfW?cluster=devnet); program data 400,000 bytes, rent 2.03 SOL; upgrade authority `NL9cyJQM8dbGjy5xwe7B1uv9GwfFBUbjHNTD7mGC7ss` |
+| 2026-10-03 14:47 | `node scripts/devnet-smoke.ts` (create → accept → deliver → approve + settle) | Worker paid 10 test tokens; [settle tx](https://explorer.solana.com/tx/64UTuShujonULJAnSRWeDzYB1FwT6Q62tgs6YuWcXcnZkzffzoAQVNa1yFPd8hZTdbFihewu3usAzQZm6F42iFSK?cluster=devnet) |
