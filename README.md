@@ -42,8 +42,8 @@ Full version, including what we still trust and why: [`docs/DESIGN_RATIONALE.md`
 | What | Link |
 |---|---|
 | Hosted demo | TODO(link: hosted demo URL) |
-| Program on Solana Explorer (devnet) | TODO(link: `https://explorer.solana.com/address/<PROGRAM_ID>?cluster=devnet`) |
-| Program ID | TODO(program-id) |
+| Program ID (devnet) | `A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer` |
+| Program on Solana Explorer | https://explorer.solana.com/address/A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer?cluster=devnet |
 | Demo video (max 3 minutes) | TODO(link: YouTube unlisted URL) |
 | Video file (GitHub release) | TODO(link: GitHub release asset) |
 | Slides (PDF) | TODO(link: slides PDF) |
@@ -55,8 +55,8 @@ Full version, including what we still trust and why: [`docs/DESIGN_RATIONALE.md`
 
 | Question | Where to look |
 |---|---|
-| Where does the intermediary disappear? | [`programs/milestone_escrow/src/instructions/settle_milestone.rs`](programs/milestone_escrow/src/instructions/settle_milestone.rs), function `decide_outcome`. It is the only code that pays out of the vault, and it uses only the stored deal state and the clock. Custody is the vault PDA created in [`create_deal.rs`](programs/milestone_escrow/src/instructions/create_deal.rs). |
-| What if a party disappears midway? Where are the funds, who recovers them? | [`docs/INVARIANTS.md`](docs/INVARIANTS.md) ("A party disappears" table). Every state has a deadline after which anyone can trigger the predefined outcome. |
+| Where does the intermediary disappear? | [`programs/milestone_escrow/src/instructions/settle_milestone.rs`](programs/milestone_escrow/src/instructions/settle_milestone.rs), function `decide_outcome`. It is the only code that pays escrowed milestone money out of the vault (`close_deal.rs` only returns leftovers and rent to the client), and it uses only the stored deal state and the clock. Custody is the vault PDA created in [`create_deal.rs`](programs/milestone_escrow/src/instructions/create_deal.rs). |
+| What if a party disappears midway? Where are the funds, who recovers them? | [`docs/INVARIANTS.md`](docs/INVARIANTS.md#what-happens-if-someone-disappears) ("What happens if someone disappears"). Every state has a deadline after which anyone can trigger the predefined outcome. |
 | Who can do what? Can the authors change anything? | [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md); [`programs/milestone_escrow/src/lib.rs`](programs/milestone_escrow/src/lib.rs) has no admin instruction. Upgrade authority status: see Live links. |
 | Why a blockchain and not a database? | [`docs/DESIGN_RATIONALE.md`](docs/DESIGN_RATIONALE.md#why-a-blockchain-and-not-a-database) |
 | What next, with one more week? | [Next steps](#next-steps) below |
@@ -68,21 +68,30 @@ Full version, including what we still trust and why: [`docs/DESIGN_RATIONALE.md`
 | `programs/milestone_escrow/src/lib.rs` | Program entry points. Eleven thin instructions; no admin, fee or pause instruction. |
 | `programs/milestone_escrow/src/state.rs` | The `Deal` account and its milestones. |
 | `programs/milestone_escrow/src/instructions/create_deal.rs` | Creates the deal and the vault, and moves the client's funds into the vault. |
-| `programs/milestone_escrow/src/instructions/settle_milestone.rs` | `decide_outcome` (the payout rule) and the only regular payout from the vault. Callable by anyone. |
+| `programs/milestone_escrow/src/instructions/settle_milestone.rs` | `decide_outcome` (the payout rule, with one unit test per row) and the only milestone payout from the vault. Callable by anyone. |
 | `programs/milestone_escrow/src/instructions/cast_vote.rs` | Arbiter votes. Records a verdict; moves no money. |
 | `programs/milestone_escrow/src/instructions/open_dispute.rs` | Client objection; locks the deposit. |
 | `programs/milestone_escrow/src/instructions/cancel_deal.rs` | Cancel before acceptance, or mutual cancel after. |
 | `programs/milestone_escrow/src/instructions/submit_proof.rs` | Verifies a GitHub "PR merged" proof on-chain (signature, deal binding, exact URL). |
 | `programs/milestone_escrow/src/instructions/close_deal.rs` | Closes a fully settled deal and returns rent to the client. |
-| `programs/milestone_escrow/src/proof/` | Proof checks: expected URL, claim identifier, signature recovery. |
-| `tests/` | Scenario tests on a local validator with time travel. |
+| `programs/milestone_escrow/src/instructions/accept_deal.rs`, `submit_work.rs`, `approve_milestone.rs`, `set_proof_target.rs` | Record decisions; none of them moves escrowed money. |
+| `programs/milestone_escrow/src/proof/mod.rs` | `expected_url`, `expected_parameters`, `binding_needle`, `claim_identifier`: what a valid proof must say. |
+| `programs/milestone_escrow/src/proof/verify.rs` | `signed_message`, `personal_sign_digest`, `recover_address`: checks the attestor's signature on-chain. |
+| `programs/milestone_escrow/src/constants.rs`, `error.rs`, `events.rs` | Limits and timers, plain-English errors, events. |
+| `tests/01-core.test.ts` | Happy path, timers (silence pays, missed delivery), validation. |
+| `tests/02-dispute.test.ts` | Objection, arbiter votes, 50/50 split, concession. |
+| `tests/03-cancel-close.test.ts` | Cancel before and after acceptance, "verdict beats cancel", close. |
+| `tests/04-proof.test.ts` | Proof release with locally signed claims, and the rejected forgeries. |
+| `tests/05-rules-mirror.test.ts` | Checks that `client/rules.ts` agrees with `decide_outcome`. |
+| `tests/helpers.ts` | Test fixtures, clock helpers, vault-balance assertion. |
 | `client/rules.ts` | A TypeScript mirror of `decide_outcome`, used only to decide which button to show. The program decides. |
-| `client/pdas.ts` | Deal and vault address derivation. |
+| `client/pdas.ts` | Deal and vault address derivation, account size and field offsets. |
+| `client/program.ts` | Typed program client built from the committed IDL. |
 | `app/` | The web app (Vite, React). |
-| `scripts/` | Command-line tools: test mint, demo actors, seeded deals, crank, prover CLI. |
+| `scripts/` | Command-line tools: IDL sync, proof constants, test mint, demo actors, seeded deals, crank, prover CLI. |
 | `prover/server.ts` | Optional helper that fetches a proof. Enforces nothing. |
-| `idl/` | The program interface (generated). |
-| `docs/` | Design rationale, invariants, permissions, limitations, interface, deploy notes, demo script. |
+| `idl/` | The program interface (generated; also copied to `app/src/idl/`). |
+| `docs/` | [Design rationale](docs/DESIGN_RATIONALE.md), [invariants](docs/INVARIANTS.md), [permissions](docs/PERMISSIONS.md), [limitations](docs/LIMITATIONS.md), [interface](docs/INTERFACE.md), [deploy notes](docs/DEPLOY.md), [demo script](docs/DEMO_SCRIPT.md). |
 
 ## The rules
 
@@ -121,8 +130,10 @@ npm ci
 anchor build && cargo test && anchor test
 ```
 
-`cargo test` covers the pure payout rule and the proof checks. `anchor test` runs the
-scenario tests on a local validator, moving the clock forward instead of waiting.
+`cargo test` covers the pure payout rule (one test per row of the table below) and the proof
+checks. `anchor test` runs `tests/01-core.test.ts` to `tests/05-rules-mirror.test.ts` on a
+local Surfpool validator, moving the clock forward instead of waiting. `npx tsc --noEmit`
+type-checks the TypeScript. CI runs the same steps (`.github/workflows/ci.yml`).
 
 ### App
 
@@ -140,17 +151,19 @@ without demo mode.
 
 ### Scripts
 
-Run from the repository root with the root `.env` filled in (see `.env.example`).
+Run from the repository root with the root `.env` filled in (copy `.env.example`).
 
 | Script | What it does |
 |---|---|
+| `scripts/idl-sync.ts` | Copies the built IDL into `idl/` and `app/src/idl/` (`node scripts/idl-sync.ts`). |
+| `scripts/gen-proof-constants.ts` | Generates the proof parameter constants in `proof/generated.rs` from the proof fixture. |
 | `scripts/create-test-mint.ts` | Creates the 6-decimal test token "tUSDC" (no freeze authority) and prints the environment lines for the app. |
 | `scripts/demo-setup.ts` | Generates and funds the demo actors (client, worker, three arbiters, passer-by). |
 | `scripts/seed-deals.ts` | Creates the pre-seeded demo deals and prints their URLs (`--set pitch` or `--set hosted`). |
 | `scripts/crank.ts` | Scans all deals and settles every milestone whose rule says it is time. Shows that no operator is needed. |
 | `scripts/prove.ts` | Fetches a "PR merged" proof, submits it and settles (`--save` / `--load` a proof file). |
 
-TODO(commands: exact invocation for each script once they exist)
+TODO(commands: exact invocation for create-test-mint, demo-setup, seed-deals, crank and prove once they land on main)
 
 ### Prover
 
@@ -165,8 +178,10 @@ bad proofs. Anyone can produce the same proof with `scripts/prove.ts`.
 
 ## Deploy
 
-See [`docs/DEPLOY.md`](docs/DEPLOY.md). TODO(deploy: summary of program ID, upgrade history
-and the `--final` decision)
+The program is deployed to devnet at `A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer` and
+upgraded in place. Procedure, SOL budget and the `--final` command: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+TODO(deploy: final `--final` decision and `solana program show` output)
 
 ## Limits
 
