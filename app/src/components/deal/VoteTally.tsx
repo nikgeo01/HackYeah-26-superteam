@@ -24,14 +24,14 @@ export function VoteTally({
         <span className="font-semibold text-ink">Arbiter votes:</span> {w} {word(w)} for the
         freelancer, {c} for the client. Two decide.
       </p>
-      <ul className="grid max-w-2xl grid-cols-3 gap-2">
+      <ul className="grid max-w-2xl gap-2 sm:grid-cols-3">
         {deal.judges.map((judge, slot) => {
           const vote = milestone.votes[slot];
           const mine = slot === mySlot;
           return (
             <li
               key={judge.toBase58()}
-              className={`min-w-0 rounded-[var(--radius-control)] border px-2.5 py-2 text-micro ${
+              className={`flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-[var(--radius-control)] border px-2.5 py-2 text-micro sm:block ${
                 mine ? "border-2 border-ink" : vote ? "border-ink/40" : "border-dashed border-rule"
               }`}
             >
@@ -39,7 +39,7 @@ export function VoteTally({
                 {ARBITER_SHORT[slot]}
                 {mine && <span className="font-semibold text-ink"> (you)</span>}
               </div>
-              <div className="mt-1 flex items-center gap-1.5 font-semibold text-ink">
+              <div className="flex items-center gap-1.5 font-semibold text-ink sm:mt-1">
                 {vote === VOTE_WORKER ? (
                   <>
                     <RoleMark shape="worker" /> Freelancer
@@ -55,7 +55,7 @@ export function VoteTally({
                   </>
                 )}
               </div>
-              <div className="mt-1 truncate">
+              <div className="truncate sm:mt-1">
                 <AddressLink address={judge} />
               </div>
             </li>

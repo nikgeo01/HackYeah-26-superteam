@@ -118,7 +118,7 @@ export function AddressLink({
       target="_blank"
       rel="noreferrer"
       title={text}
-      className={`figures ${LINK}`}
+      className={`figures whitespace-nowrap ${LINK}`}
     >
       {shortAddress(text, chars)}
     </a>

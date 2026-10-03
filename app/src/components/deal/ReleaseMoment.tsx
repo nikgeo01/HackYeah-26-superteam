@@ -115,7 +115,7 @@ export function ReleaseMoment({
         <ClockText text="00:00" />
       </p>
       <div className="space-y-3">
-        <h4 className="text-title font-semibold leading-snug tracking-[-0.01em] text-ink">
+        <h4 className="text-lead font-semibold leading-snug tracking-[-0.01em] text-ink sm:text-title">
           The review time is over. Anyone can release this payment.
         </h4>
         <p className="max-w-[60ch] text-sm text-ink-soft">
