@@ -1,5 +1,7 @@
-// "How it works and limits" (PLAN 4.1, WP-51): rules, payout table, what if someone
-// disappears, who can do what, honest limits, and the live upgrade status of the program.
+// "How it works and limits" (PLAN 4.1, WP-51): the rules as one readable document. Payouts and
+// "if someone disappears" are ledgers, permissions a compact table with the role shapes, and the
+// live upgrade status of the program closes it.
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   DISAPPEAR_NOTE,
@@ -7,171 +9,190 @@ import {
   LIMITS,
   PAYOUT_NOTE,
   PAYOUT_ROWS,
+  PERMISSION_NOTE,
   PERMISSION_ROWS,
   RULES,
+  type Allowed,
 } from "../components/how/content";
 import { UpgradeStatus } from "../components/how/UpgradeStatus";
+import { RoleMark, type RoleShape } from "../components/RoleSwitcher";
+import { Heading } from "../components/ui";
 
-const SECTIONS = [
-  ["rules", "The rules"],
-  ["payouts", "Who gets paid when"],
-  ["disappears", "What if someone disappears"],
-  ["who", "Who can do what"],
-  ["limits", "Honest limits"],
-  ["program", "The program"],
-] as const;
-
-function Section({
-  id,
-  title,
-  children,
-}: {
-  id: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-4 space-y-3">
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <section className="space-y-4 border-t border-rule pt-8">
+      <Heading level={2}>{title}</Heading>
       {children}
     </section>
   );
 }
 
-const th = "py-2 pr-4 text-left font-medium text-slate-500";
-const td = "py-2 pr-4 align-top";
+const Note = ({ children }: { children: ReactNode }) => (
+  <p className="text-sm text-ink-soft">{children}</p>
+);
+
+const ROLES: { key: "client" | "worker" | "arbiter" | "anyone"; label: string; shape: RoleShape }[] = [
+  { key: "client", label: "Client", shape: "client" },
+  { key: "worker", label: "Freelancer", shape: "worker" },
+  { key: "arbiter", label: "Arbiters", shape: "arbiter" },
+  { key: "anyone", label: "Anyone", shape: "stranger" },
+];
+
+function Cell({ allowed, shape }: { allowed: Allowed | undefined; shape: RoleShape }) {
+  if (!allowed) return <span className="sr-only">No</span>;
+  return (
+    <span className="inline-flex flex-col items-center gap-1">
+      <RoleMark shape={shape} />
+      <span className={allowed === true ? "sr-only" : "text-micro leading-tight text-ink-soft"}>
+        {allowed === true ? "Yes" : allowed}
+      </span>
+    </span>
+  );
+}
 
 export default function How() {
   return (
-    <div className="mx-auto max-w-3xl space-y-10">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">How it works and its limits</h1>
-        <p className="text-slate-700">
-          Kept replaces the freelance platform in the middle with a small
-          public program on Solana. It holds the money, applies fixed timers,
-          and lets a panel of three arbiters settle disagreements. Here is
-          exactly what it does, and what it cannot do.
+    <article className="max-w-[68ch] space-y-8">
+      <header className="space-y-3">
+        <Heading level={1}>How it works, and where it stops</Heading>
+        <p className="text-lead leading-snug text-ink-soft">
+          Kept replaces the freelance platform in the middle with a small public program on Solana.
+          It holds the money, runs fixed timers, and lets three arbiters settle disagreements. This
+          page says exactly what it does, and what it cannot do.
         </p>
-        <nav className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          {SECTIONS.map(([id, label]) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              onClick={(e) => {
-                // HashRouter owns the URL hash, so scroll instead of navigating.
-                e.preventDefault();
-                document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="text-indigo-700 underline underline-offset-2"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-      </div>
+      </header>
 
-      <Section id="rules" title="The rules">
-        <ol className="list-decimal space-y-2 pl-6 text-slate-800">
+      <Section title="The rules">
+        <ol className="list-decimal space-y-3 pl-5 marker:font-semibold marker:text-ink-soft">
           {RULES.map((r) => (
-            <li key={r}>{r}</li>
+            <li key={r} className="pl-1">
+              {r}
+            </li>
           ))}
         </ol>
       </Section>
 
-      <Section id="payouts" title="Who gets paid when">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200">
-                <th className={th}>When</th>
-                <th className={th}>The freelancer gets</th>
-                <th className={th}>The client gets</th>
-              </tr>
-            </thead>
-            <tbody>
-              {PAYOUT_ROWS.map((r) => (
-                <tr key={r.when} className="border-b border-slate-100">
-                  <td className={td}>{r.when}</td>
-                  <td className={td}>{r.freelancer}</td>
-                  <td className={td}>{r.client}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-sm text-slate-600">{PAYOUT_NOTE}</p>
-        <p className="text-sm text-slate-600">
-          In every case the money in a milestone (plus any deposit) is fully
-          paid out, to the client, the freelancer or both. Nothing is kept as
-          a fee.
+      <Section title="Who gets paid when">
+        <p>
+          When a milestone is settled, the program checks these cases from the top. The first one that
+          applies decides what <RoleMark shape="worker" className="mx-0.5" /> the freelancer and{" "}
+          <RoleMark shape="client" className="mx-0.5" /> the client get.
         </p>
+        <ol className="ledger border-y border-rule">
+          {PAYOUT_ROWS.map((r, i) => (
+            <li key={r.when} className="grid gap-x-4 gap-y-2 py-3 sm:grid-cols-[1.5rem_minmax(0,1fr)_15rem]">
+              <span className="figures hidden text-sm text-ink-soft sm:block">{i + 1}</span>
+              <p className="text-sm font-medium">{r.when}</p>
+              <dl className="space-y-1 text-sm">
+                <div className="flex items-baseline gap-2">
+                  <dt className="pt-[0.1em]">
+                    <RoleMark shape="worker" />
+                    <span className="sr-only">Freelancer</span>
+                  </dt>
+                  <dd className={r.freelancer === "Nothing" ? "text-ink-soft" : ""}>{r.freelancer}</dd>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <dt>
+                    <RoleMark shape="client" />
+                    <span className="sr-only">Client</span>
+                  </dt>
+                  <dd className={r.client === "Nothing" ? "text-ink-soft" : ""}>{r.client}</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ol>
+        <Note>
+          {PAYOUT_NOTE} Nothing is
+          ever kept as a fee: the whole milestone, and any deposit, is paid out.
+        </Note>
       </Section>
 
-      <Section id="disappears" title="What if someone disappears">
-        <p className="text-sm text-slate-700">
-          Every step has a deadline, so money can never be stuck because
-          someone stopped answering.
-        </p>
-        <dl className="divide-y divide-slate-200 rounded-lg border border-slate-200">
+      <Section title="If someone disappears">
+        <p>Every step has a deadline, so money is never stuck because someone stopped answering.</p>
+        <dl className="ledger border-y border-rule">
           {DISAPPEAR_ROWS.map((r) => (
-            <div key={r.who} className="grid gap-1 px-4 py-3 sm:grid-cols-[16rem_1fr]">
+            <div key={r.who} className="grid gap-x-6 gap-y-1 py-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
               <dt className="text-sm font-medium">{r.who}</dt>
-              <dd className="text-sm text-slate-700">{r.what}</dd>
+              <dd className="text-sm">
+                <span className="font-semibold">{r.by}.</span>{" "}
+                <span className="text-ink-soft">{r.what}</span>
+              </dd>
             </div>
           ))}
         </dl>
-        <p className="text-sm text-slate-600">{DISAPPEAR_NOTE}</p>
+        <Note>{DISAPPEAR_NOTE}</Note>
       </Section>
 
-      <Section id="who" title="Who can do what">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <Section title="Who can do what">
+        <div className="relative -mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[30rem] border-y border-rule text-sm">
             <thead>
-              <tr className="border-b border-slate-200">
-                <th className={th}>Action</th>
-                <th className={th}>Who</th>
+              <tr className="border-b border-rule text-left">
+                <th scope="col" className="py-2 pr-4 font-medium text-ink-soft">
+                  Action
+                </th>
+                {ROLES.map((r) => (
+                  <th key={r.key} scope="col" className="w-[4.75rem] px-1 py-2 text-center font-medium">
+                    <span className="inline-flex flex-col items-center gap-1">
+                      <RoleMark shape={r.shape} />
+                      {r.label}
+                    </span>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {PERMISSION_ROWS.map((r) => (
-                <tr key={r.action} className="border-b border-slate-100">
-                  <td className={td}>{r.action}</td>
-                  <td className={td}>{r.who}</td>
+              {PERMISSION_ROWS.map((row) => (
+                <tr key={row.action} className="border-t border-rule-soft first:border-t-0">
+                  <th scope="row" className="py-2.5 pr-4 text-left font-normal">
+                    {row.action}
+                  </th>
+                  {ROLES.map((r) => (
+                    <td key={r.key} className="px-1 py-2.5 text-center align-middle">
+                      <Cell allowed={row[r.key]} shape={r.shape} />
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="text-sm text-slate-600">
-          There is no admin button, no fee and no pause switch in the program.
-        </p>
+        <Note>{PERMISSION_NOTE}</Note>
       </Section>
 
-      <Section id="limits" title="Honest limits">
-        <ul className="list-disc space-y-2 pl-6 text-slate-800">
+      <Section title="Honest limits">
+        <ul className="list-disc space-y-3 pl-5 marker:text-ink-soft">
           {LIMITS.map((l) => (
-            <li key={l}>{l}</li>
+            <li key={l} className="pl-1">
+              {l}
+            </li>
           ))}
         </ul>
       </Section>
 
-      <Section id="program" title="The program">
-        <p className="text-sm text-slate-700">
-          The rules above are the code of one Solana program. You can inspect
-          it, and every payment, on the public explorer.
+      <Section title="The program">
+        <p>
+          The rules above are the code of one Solana program. Anyone can inspect it, and every payment
+          it has made, on the public explorer.
         </p>
         <UpgradeStatus />
       </Section>
 
-      <p className="text-sm">
-        <Link to="/new" className="font-medium text-indigo-700 underline">
+      <div className="flex flex-wrap items-center gap-4 border-t border-rule pt-8">
+        <Link
+          to="/new"
+          className="inline-flex items-center rounded-[var(--radius-control)] border border-stamp bg-stamp px-3.5 py-2 text-sm font-semibold text-sheet hover:bg-stamp-deep"
+        >
           Create a deal
-        </Link>{" "}
-        ·{" "}
-        <Link to="/deals" className="font-medium text-indigo-700 underline">
-          My deals
         </Link>
-      </p>
-    </div>
+        <Link
+          to="/deals"
+          className="text-sm font-semibold text-ink underline decoration-ink/35 underline-offset-[3px] hover:decoration-stamp"
+        >
+          See my deals
+        </Link>
+      </div>
+    </article>
   );
 }

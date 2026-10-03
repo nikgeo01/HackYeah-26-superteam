@@ -15,7 +15,7 @@ export type DemoRoleId =
 export interface DemoRole {
   id: DemoRoleId;
   label: string;
-  /** Tailwind classes for the coloured badge. */
+  /** Tailwind classes for the role tag (roles differ by shape mark, not hue; see RoleMark). */
   badge: string;
   /** Plain explanation shown on /demo. */
   blurb: string;
@@ -25,42 +25,42 @@ export const DEMO_ROLES: readonly DemoRole[] = [
   {
     id: "client",
     label: "Client",
-    badge: "bg-sky-100 text-sky-800 ring-sky-300",
+    badge: "border-ink/60 text-ink",
     blurb: "The startup paying for the work.",
   },
   {
     id: "worker",
-    label: "Worker",
-    badge: "bg-emerald-100 text-emerald-800 ring-emerald-300",
+    label: "Freelancer",
+    badge: "border-ink/60 text-ink",
     blurb: "Kasia, the freelance developer.",
   },
   {
     id: "arbiter1",
     label: "Arbiter 1",
-    badge: "bg-amber-100 text-amber-800 ring-amber-300",
+    badge: "border-ink/60 text-ink",
     blurb: "Picked by the client.",
   },
   {
     id: "arbiter2",
     label: "Arbiter 2",
-    badge: "bg-orange-100 text-orange-800 ring-orange-300",
+    badge: "border-ink/60 text-ink",
     blurb: "Picked by the freelancer.",
   },
   {
     id: "arbiter3",
     label: "Arbiter 3",
-    badge: "bg-rose-100 text-rose-800 ring-rose-300",
+    badge: "border-ink/60 text-ink",
     blurb: "Picked by both.",
   },
   {
     id: "passerby",
     label: "Passer-by",
-    badge: "bg-violet-100 text-violet-800 ring-violet-300",
+    badge: "border-ink/60 text-ink",
     blurb: "A stranger with no part in the deal.",
   },
 ];
 
-export const WALLET_BADGE = "bg-slate-100 text-slate-800 ring-slate-300";
+export const WALLET_BADGE = "border-ink/60 text-ink";
 
 /** Shown wherever demo mode is on (ADR-10 security framing). */
 export const DEMO_SECURITY_NOTE =

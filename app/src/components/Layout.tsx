@@ -6,7 +6,21 @@ import { RoleSwitcher } from "./RoleSwitcher";
 import { DEMO_MODE } from "../lib/env";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded-md px-2 py-1 text-sm font-medium ${isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-200"}`;
+  `relative py-1 text-sm font-medium transition-colors ${
+    isActive
+      ? "text-ink after:absolute after:inset-x-0 after:-bottom-[13px] after:h-[3px] after:bg-stamp"
+      : "text-ink-soft hover:text-ink"
+  }`;
+
+/** The wordmark: the name with a small stamp-ink seal standing in for the dot of a signature. */
+function Wordmark() {
+  return (
+    <NavLink to="/" className="flex items-baseline gap-1.5" aria-label="Kept, home">
+      <span className="text-[1.45rem] font-[750] leading-none tracking-[-0.04em] text-ink">kept</span>
+      <span aria-hidden className="h-2 w-2 translate-y-[-1px] rotate-45 bg-stamp" />
+    </NavLink>
+  );
+}
 
 export function Layout() {
   const { actor } = useActor();
@@ -15,13 +29,13 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3">
-          <NavLink to="/" className="text-xl font-bold tracking-tight">
-            Kept
-          </NavLink>
-          <DevnetChip />
-          <nav className="flex flex-wrap items-center gap-1">
+      <header className="border-b border-rule bg-sheet">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-3">
+          <div className="flex items-baseline gap-3">
+            <Wordmark />
+            <DevnetChip />
+          </div>
+          <nav className="flex flex-wrap items-center gap-6" aria-label="Main">
             <NavLink to="/deals" className={navClass}>
               My deals
             </NavLink>
@@ -33,7 +47,7 @@ export function Layout() {
             </NavLink>
             {DEMO_MODE && (
               <NavLink to="/demo" className={navClass}>
-                Demo
+                Demo roles
               </NavLink>
             )}
           </nav>
@@ -42,17 +56,15 @@ export function Layout() {
             {showWalletButton && <WalletMultiButton />}
           </div>
         </div>
-        {DEMO_MODE && (
-          <div className="mx-auto max-w-5xl px-4 pb-3">
-            <DemoNote />
-          </div>
-        )}
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">
         <Outlet />
       </main>
-      <footer className="border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        Kept runs on Solana devnet. All money here is test money.
+      <footer className="mx-auto w-full max-w-6xl px-5 pb-8 pt-4">
+        <div className="flex flex-col gap-2 border-t border-rule pt-4 text-micro text-ink-soft sm:flex-row sm:justify-between">
+          <span>Kept runs on Solana devnet. Every amount here is test money.</span>
+          <DemoNote />
+        </div>
       </footer>
     </div>
   );

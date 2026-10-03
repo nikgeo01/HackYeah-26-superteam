@@ -2,11 +2,59 @@
 import type { PublicKey } from "@solana/web3.js";
 import { useActor } from "../../providers/ActorProvider";
 import type { DemoRoleId } from "../../lib/actors";
-import { shortAddress } from "../../lib/format";
-import { Button, Field, inputClass } from "./fields";
+import { Button } from "../ui";
+import { RoleMark, type RoleShape } from "../RoleSwitcher";
+import { Field, Part, inputClass } from "./fields";
+import { Party } from "./Agreement";
 import { JUDGE_LABELS, type DealDraft } from "./model";
 
 const JUDGE_DEMO_ROLES: DemoRoleId[] = ["arbiter1", "arbiter2", "arbiter3"];
+
+function AddressInput({
+  id,
+  value,
+  onChange,
+  invalid,
+  demo,
+  demoLabel,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  invalid: boolean;
+  demo: string | null;
+  demoLabel: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <input
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Solana address, 32 to 44 characters"
+        spellCheck={false}
+        autoComplete="off"
+        aria-invalid={invalid || undefined}
+        aria-describedby={`${id}-note`}
+        className={`${inputClass(invalid)} flex-1 basis-60`}
+      />
+      {demo && demo !== value && (
+        <Button kind="quiet" onClick={() => onChange(demo)} className="shrink-0">
+          Use {demoLabel}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function Label({ shape, children }: { shape: RoleShape; children: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <RoleMark shape={shape} />
+      {children}
+    </span>
+  );
+}
 
 export function StepPeople({
   draft,
@@ -22,10 +70,9 @@ export function StepPeople({
   const { demoMode, demoActors } = useActor();
   const demoKey = (id: DemoRoleId) =>
     demoActors.find((a) => a.id === id)?.publicKey.toBase58() ?? null;
-  const demoWorker = demoKey("worker");
-  const demoJudges = JUDGE_DEMO_ROLES.map(demoKey);
-  const canFillAll =
-    demoMode && demoWorker !== null && demoJudges.every((k) => k !== null);
+  const demoWorker = demoMode ? demoKey("worker") : null;
+  const demoJudges = JUDGE_DEMO_ROLES.map((id) => (demoMode ? demoKey(id) : null));
+  const canFillAll = demoWorker !== null && demoJudges.every((k) => k !== null);
 
   const setJudge = (i: number, value: string) => {
     const judges = [...draft.judges] as DealDraft["judges"];
@@ -34,91 +81,72 @@ export function StepPeople({
   };
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-slate-700">
-        You are the client: you lock the payment and approve the work.{" "}
-        {client ? (
-          <>
-            Your address: <strong>{shortAddress(client)}</strong>.
-          </>
-        ) : (
-          <strong>Connect a wallet (or pick a demo role) first.</strong>
-        )}
-      </p>
-
-      {canFillAll && (
-        <div className="flex flex-wrap items-center gap-2 rounded-md bg-violet-50 px-3 py-2 text-sm">
-          <span className="text-violet-900">Demo mode:</span>
-          <Button
-            onClick={() =>
-              update({
-                worker: demoWorker!,
-                judges: demoJudges as DealDraft["judges"],
-              })
-            }
-          >
-            Fill in the demo Worker and Arbiters
-          </Button>
-        </div>
-      )}
-
-      <Field
-        label="Freelancer's Solana address"
-        htmlFor="worker"
-        hint="Ask the freelancer for the address of their wallet. Only this address can accept the deal and deliver the work."
-        error={err("worker")}
+    <div className="space-y-8">
+      <Part
+        title="You and the freelancer"
+        intro={
+          client ? (
+            <>
+              You are the client: you lock the payment and approve the work. You sign as{" "}
+              <Party address={client} shape="client" fallback="" />.
+            </>
+          ) : (
+            "You are the client: you lock the payment and approve the work. Connect a wallet, or pick a demo role in the header, to sign as the client."
+          )
+        }
       >
-        <div className="flex gap-2">
-          <input
+        {canFillAll && (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[var(--radius-control)] border border-dashed border-rule px-3 py-2.5 text-sm">
+            <span className="text-ink-soft">Showing the demo? Fill in the demo Worker and all three Arbiters.</span>
+            <Button
+              kind="plain"
+              onClick={() =>
+                update({ worker: demoWorker!, judges: demoJudges as DealDraft["judges"] })
+              }
+            >
+              Fill in the demo people
+            </Button>
+          </div>
+        )}
+        <Field
+          label={<Label shape="worker">Freelancer&apos;s address</Label>}
+          htmlFor="worker"
+          hint="Ask the freelancer for their wallet address. Only this address can accept the deal and deliver the work."
+          error={err("worker")}
+        >
+          <AddressInput
             id="worker"
             value={draft.worker}
-            onChange={(e) => update({ worker: e.target.value })}
-            placeholder="e.g. 7xKX…"
-            spellCheck={false}
-            className={inputClass(!!err("worker"))}
+            onChange={(worker) => update({ worker })}
+            invalid={!!err("worker")}
+            demo={demoWorker}
+            demoLabel="Freelancer"
           />
-          {demoMode && demoWorker && (
-            <Button onClick={() => update({ worker: demoWorker })}>
-              Demo Worker
-            </Button>
-          )}
-        </div>
-      </Field>
+        </Field>
+      </Part>
 
-      <fieldset className="space-y-3 rounded-lg border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold">
-          Three arbiters, in case you disagree
-        </legend>
-        <p className="text-xs text-slate-600">
-          If you raise an objection, these three people vote. Two matching
-          votes decide. They can never receive the money themselves. If they do
-          not decide in time, the payment is split 50/50. They must be three
-          different people, and neither of you.
-        </p>
+      <Part
+        title="Three arbiters, in case you disagree"
+        intro="If you object to a delivery, these three vote and two matching votes decide. They can never receive the money. They must be three different people, and neither of you."
+      >
         {JUDGE_LABELS.map((label, i) => (
           <Field
             key={label}
-            label={label}
+            label={<Label shape="arbiter">{label}</Label>}
             htmlFor={`judge${i}`}
             error={err(`judge${i}`)}
           >
-            <div className="flex gap-2">
-              <input
-                id={`judge${i}`}
-                value={draft.judges[i]}
-                onChange={(e) => setJudge(i, e.target.value)}
-                spellCheck={false}
-                className={inputClass(!!err(`judge${i}`))}
-              />
-              {demoMode && demoJudges[i] && (
-                <Button onClick={() => setJudge(i, demoJudges[i]!)}>
-                  Demo Arbiter {i + 1}
-                </Button>
-              )}
-            </div>
+            <AddressInput
+              id={`judge${i}`}
+              value={draft.judges[i]}
+              onChange={(v) => setJudge(i, v)}
+              invalid={!!err(`judge${i}`)}
+              demo={demoJudges[i]}
+              demoLabel={`Arbiter ${i + 1}`}
+            />
           </Field>
         ))}
-      </fieldset>
+      </Part>
     </div>
   );
 }

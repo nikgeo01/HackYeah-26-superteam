@@ -9,9 +9,22 @@ import { cancelRequests, type DealView, type Role } from "../../lib/deals";
 import { COPY } from "../../lib/errors";
 import { cancelDealIx, settleManyIxs } from "../../lib/instructions";
 import { settleableIndexes } from "../../lib/outcomes";
+import { Notice } from "../ui";
 import { Btn, Spinner } from "./common";
 
-export function CancelBanner({ deal, role }: { deal: DealView; role: Role }) {
+/**
+ * `placement="banner"` (under "Your move") shows requests in flight; `placement="footer"` shows
+ * only the quiet "Ask to cancel" control when nothing is pending.
+ */
+export function CancelBanner({
+  deal,
+  role,
+  placement = "banner",
+}: {
+  deal: DealView;
+  role: Role;
+  placement?: "banner" | "footer";
+}) {
   const program = useProgram();
   const { publicKey } = useActor();
   const { now } = useChainTime();
@@ -61,81 +74,69 @@ export function CancelBanner({ deal, role }: { deal: DealView; role: Role }) {
       };
     });
 
+  const pending = req.client || req.worker;
+  if (placement === "footer" && pending) return null;
+  if (placement === "banner" && !pending) return null;
+
   if (isParty && mine) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
-        <p className="text-sm text-amber-950">
-          <strong>You have asked to cancel this deal.</strong> It is cancelled
-          only if the {other} agrees. Until then, all normal rules keep running.
+      <Notice tone="info" className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-[60ch]">
+          <strong>You have asked to cancel this deal.</strong> It is cancelled only if the {other}{" "}
+          agrees. Until then, all normal rules keep running.
         </p>
-        <Btn
-          variant="secondary"
-          disabled={busy}
-          onClick={() => setFlag(false, "Withdraw cancel request")}
-        >
+        <Btn variant="secondary" disabled={busy} onClick={() => setFlag(false, "Withdraw cancel request")}>
           {busy && <Spinner />}Withdraw request
         </Btn>
-      </div>
+      </Notice>
     );
   }
 
   if (isParty && theirs) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-orange-300 bg-orange-50 p-4">
-        <p className="text-sm text-orange-950">
-          <strong>The {other} asked to cancel.</strong> Undecided milestones
-          would be refunded to {role === "client" ? "you" : "the client"}.
-          Milestones already approved or decided still go to whoever won them.
+      <Notice tone="move" className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-[60ch]">
+          <span className="block text-sm font-semibold text-stamp">Your move</span>
+          <strong>The {other} asked to cancel.</strong> Undecided milestones would be refunded to{" "}
+          {role === "client" ? "you" : "the client"}. Milestones already approved or decided still
+          go to whoever won them.
         </p>
-        <Btn variant="primary" disabled={busy} onClick={agree}>
-          {busy && <Spinner />}Agree
+        <Btn disabled={busy} onClick={agree}>
+          {busy && <Spinner />}Agree to cancel
         </Btn>
-      </div>
+      </Notice>
     );
   }
 
   if (!isParty && (req.client || req.worker)) {
     return (
-      <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-        The {req.client ? "client" : "freelancer"} has asked to cancel this
-        deal. It is cancelled only if the {req.client ? "freelancer" : "client"}{" "}
-        agrees.
-      </p>
+      <Notice tone="info">
+        The {req.client ? "client" : "freelancer"} has asked to cancel this deal. It is cancelled
+        only if the {req.client ? "freelancer" : "client"} agrees.
+      </Notice>
     );
   }
 
-  if (!isParty) return null;
+  if (!isParty || placement !== "footer") return null;
 
-  return (
-    <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
-      {asking ? (
-        <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
-          <p className="text-slate-700">
-            Ask the {other} to cancel? Nothing changes unless they agree. Then
-            every undecided milestone is refunded to the client.
-          </p>
-          <div className="flex gap-2">
-            <Btn
-              variant="ghost"
-              onClick={() => setAsking(false)}
-              disabled={busy}
-            >
-              Never mind
-            </Btn>
-            <Btn
-              variant="danger"
-              disabled={busy}
-              onClick={() => setFlag(true, "Ask to cancel")}
-            >
-              {busy && <Spinner />}Ask to cancel
-            </Btn>
-          </div>
-        </div>
-      ) : (
-        <Btn variant="ghost" onClick={() => setAsking(true)}>
-          Ask to cancel this deal…
+  return asking ? (
+    <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-[var(--radius-control)] border border-rule p-3 text-sm">
+      <p className="max-w-[60ch] text-ink">
+        Ask the {other} to cancel? Nothing changes unless they agree. Then every undecided
+        milestone is refunded to the client.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Btn variant="ghost" onClick={() => setAsking(false)} disabled={busy} data-preview-ok>
+          Never mind
         </Btn>
-      )}
+        <Btn variant="danger" disabled={busy} onClick={() => setFlag(true, "Ask to cancel")}>
+          {busy && <Spinner />}Ask to cancel
+        </Btn>
+      </div>
     </div>
+  ) : (
+    <Btn variant="ghost" className="-ml-3.5" onClick={() => setAsking(true)} data-preview-ok>
+      Ask to cancel this deal
+    </Btn>
   );
 }

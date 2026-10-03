@@ -143,17 +143,17 @@ const REPO_RE = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
 export function repoError(repo: string): string | null {
   if (repo === "") return null;
   if (new TextEncoder().encode(repo).length > MAX_REPO_LEN)
-    return `At most ${MAX_REPO_LEN} characters.`;
+    return `Shorten it to ${MAX_REPO_LEN} characters or fewer.`;
   if (!REPO_RE.test(repo))
-    return 'Use the form "owner/name" (letters, digits, ".", "_" and "-" only).';
+    return 'Write it as "owner/name", using letters, digits, ".", "_" and "-" only.';
   return null;
 }
 
 function windowError(d: DurationDraft): string | null {
   const secs = durationSecs(d);
-  if (secs === null) return "Enter a whole number of seconds.";
-  if (secs < MIN_WINDOW_SECS) return `At least ${MIN_WINDOW_SECS} seconds.`;
-  if (secs > MAX_WINDOW_SECS) return "At most 365 days.";
+  if (secs === null) return "Enter a number that comes to whole seconds, such as 45 seconds or 1.5 minutes.";
+  if (secs < MIN_WINDOW_SECS) return `Make it at least ${MIN_WINDOW_SECS} seconds.`;
+  if (secs > MAX_WINDOW_SECS) return "Make it 365 days or less.";
   return null;
 }
 
@@ -178,7 +178,7 @@ export function validateDraft(
 
   // 1. Milestone count.
   if (d.milestones.length < 1 || d.milestones.length > MAX_MILESTONES)
-    errors.milestones = `A deal has 1 to ${MAX_MILESTONES} milestones.`;
+    errors.milestones = `Keep between 1 and ${MAX_MILESTONES} milestones.`;
 
   // 2. Amounts > 0, 6 decimals, total fits in u64.
   let total = 0n;
@@ -186,12 +186,12 @@ export function validateDraft(
     const raw = parseAmount(m.amount);
     if (raw === null)
       errors[`m${m.key}.amount`] =
-        "Enter an amount, with at most 6 decimals.";
-    else if (raw <= 0n) errors[`m${m.key}.amount`] = "Must be more than 0.";
+        "Enter an amount with at most 6 decimals, such as 250 or 12.5.";
+    else if (raw <= 0n) errors[`m${m.key}.amount`] = "Enter an amount above 0.";
     else total += raw;
     return raw ?? 0n;
   });
-  if (total > U64_MAX) errors.milestones = "The total is too large.";
+  if (total > U64_MAX) errors.milestones = "Lower the amounts; the total is more than a deal can hold.";
 
   // 3. Windows and due times within bounds.
   for (const [k, w] of [
@@ -210,20 +210,20 @@ export function validateDraft(
   // 4. Identity.
   const worker = toPublicKey(d.worker.trim());
   if (!d.worker.trim()) errors.worker = "Enter the freelancer's address.";
-  else if (!worker) errors.worker = "This is not a valid Solana address.";
+  else if (!worker) errors.worker = "Paste the full Solana address; this one is not valid.";
   else if (client && worker.equals(client))
-    errors.worker = "The freelancer cannot be you (the client).";
+    errors.worker = "Use the freelancer's address here, not your own.";
   const judges = d.judges.map((j) => toPublicKey(j.trim()));
   judges.forEach((j, i) => {
     const key = `judge${i}`;
-    if (!d.judges[i].trim()) errors[key] = "Enter this arbiter's address.";
-    else if (!j) errors[key] = "This is not a valid Solana address.";
+    if (!d.judges[i].trim()) errors[key] = "Enter this arbiter's Solana address.";
+    else if (!j) errors[key] = "Paste the full Solana address; this one is not valid.";
     else if (client && j.equals(client))
-      errors[key] = "An arbiter cannot be the client.";
+      errors[key] = "Pick someone else: you, the client, cannot be an arbiter.";
     else if (worker && j.equals(worker))
-      errors[key] = "An arbiter cannot be the freelancer.";
+      errors[key] = "Pick someone else: the freelancer cannot be an arbiter.";
     else if (judges.slice(0, i).some((o) => o && o.equals(j)))
-      errors[key] = "Each arbiter must be a different person.";
+      errors[key] = "Use a different address: each arbiter must be a different person.";
   });
 
   // 5. Repository.
@@ -248,14 +248,14 @@ export function validateDraft(
     const key = `m${m.key}.pr`;
     const n = /^\d+$/.test(text) ? Number(text) : NaN;
     if (!Number.isInteger(n) || n <= 0 || n > U32_MAX) {
-      errors[key] = "A pull request number is a whole number above 0.";
+      errors[key] = "Enter the pull request number, such as 12.";
       return 0;
     }
     if (!repo)
-      errors[key] = "Enter the repository first (step 2, GitHub section).";
+      errors[key] = "Enter the repository first, in the GitHub section below.";
     else if (!attestorSet && !errors.attestor)
-      errors[key] = "Pull request release needs an attestor (Advanced).";
-    if (seen.has(n)) errors[key] = "Each milestone needs its own pull request.";
+      errors[key] = "Set an attestor under Advanced, or clear this pull request number.";
+    if (seen.has(n)) errors[key] = "Use a different pull request for each milestone.";
     seen.add(n);
     return n;
   });
@@ -263,8 +263,8 @@ export function validateDraft(
   // 8. Deposit may be zero.
   const depositRaw = d.deposit.trim() === "" ? 0n : parseAmount(d.deposit);
   if (depositRaw === null)
-    errors.deposit = "Enter an amount, with at most 6 decimals (or 0).";
-  else if (depositRaw > U64_MAX) errors.deposit = "Too large.";
+    errors.deposit = "Enter an amount with at most 6 decimals, or leave it empty for 0.";
+  else if (depositRaw > U64_MAX) errors.deposit = "Enter a smaller deposit.";
 
   const ok = Object.keys(errors).length === 0;
   const input: DealInputDraft | null =

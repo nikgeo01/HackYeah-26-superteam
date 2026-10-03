@@ -1,36 +1,32 @@
-// Demo page (PLAN 4.1, 4.7, ADR-10), only routed when VITE_DEMO_MODE=true: how the role
-// switcher works, every demo actor with balances, and links to the pre-seeded deals.
+// Demo page (PLAN 4.1, 4.7, ADR-10), only routed when VITE_DEMO_MODE=true: every demo actor as
+// a ledger row with balances and an "Act as" button, then the pre-seeded deals as quiet rows.
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useActor } from "../providers/ActorProvider";
+import type { PublicKey } from "@solana/web3.js";
+import { useActor, type ActorId } from "../providers/ActorProvider";
 import { useBalances } from "../hooks/useBalances";
 import { useDeal } from "../hooks/useDeals";
 import { useChainNow } from "../providers/ChainTimeProvider";
-import { RoleBadge } from "../components/RoleSwitcher";
-import { DemoNote } from "../components/DemoNote";
-import { DealCard } from "../components/DealCard";
-import {
-  explorerAddressUrl,
-  formatAmount,
-  formatSol,
-  shortAddress,
-} from "../lib/format";
+import { RoleMark, shapeForLabel, type RoleShape } from "../components/RoleSwitcher";
+import { nextStep } from "../components/DealCard";
+import { Button, Heading, Notice, Sheet } from "../components/ui";
+import { InlineAmount } from "../components/ui/InlineAmount";
+import { explorerAddressUrl, formatSol, shortAddress } from "../lib/format";
 import { DEMO_DEALS_RAW } from "../lib/env";
+import { DEMO_SECURITY_NOTE } from "../lib/actors";
+import { roleIn } from "../lib/deals";
 import { toPublicKey } from "../lib/pdas";
-import type { DemoActor } from "../lib/actors";
 
 /** Parses VITE_DEMO_DEALS (`{ "D1": "<address>", ... }`); bad entries are skipped. */
 function parseDemoDeals(raw: string): { label: string; address: string }[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
-      return [];
-    return Object.entries(parsed as Record<string, unknown>).flatMap(
-      ([label, value]) => {
-        const key = toPublicKey(typeof value === "string" ? value : null);
-        return key ? [{ label, address: key.toBase58() }] : [];
-      },
-    );
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
+    return Object.entries(parsed as Record<string, unknown>).flatMap(([label, value]) => {
+      const key = toPublicKey(typeof value === "string" ? value : null);
+      return key ? [{ label, address: key.toBase58() }] : [];
+    });
   } catch (err) {
     console.warn("VITE_DEMO_DEALS is not valid JSON", err);
     return [];
@@ -39,189 +35,192 @@ function parseDemoDeals(raw: string): { label: string; address: string }[] {
 
 const DEMO_DEALS = parseDemoDeals(DEMO_DEALS_RAW);
 
-function ActorRow({
-  actor,
+const linkClass =
+  "text-ink underline decoration-ink/35 underline-offset-[3px] hover:decoration-stamp";
+
+/** Column layout shared by the header and every row (stacks on a phone). */
+const ROW =
+  "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 px-4 py-3 md:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_7.5rem_6.5rem_10rem] sm:px-5";
+
+function Row({
+  shape,
+  name,
+  address,
+  blurb,
+  publicKey,
   active,
+  action,
   onSelect,
 }: {
-  actor: DemoActor;
+  shape: RoleShape;
+  name: string;
+  address?: PublicKey | null;
+  blurb: ReactNode;
+  publicKey: PublicKey | null;
   active: boolean;
+  action: string;
   onSelect: () => void;
 }) {
-  const { data } = useBalances(actor.publicKey);
-  const td = "py-2 pr-4 align-middle";
+  const { data } = useBalances(publicKey);
   return (
-    <tr className={`border-b border-slate-100 ${active ? "bg-indigo-50" : ""}`}>
-      <td className={td}>
-        <RoleBadge label={actor.label} badge={actor.badge} />
-      </td>
-      <td className={`${td} text-slate-600`}>{actor.blurb}</td>
-      <td className={td}>
-        <a
-          href={explorerAddressUrl(actor.publicKey)}
-          target="_blank"
-          rel="noreferrer"
-          className="font-mono underline"
-          title={actor.publicKey.toBase58()}
-        >
-          {shortAddress(actor.publicKey)}
-        </a>
-      </td>
-      <td className={`${td} tabular-nums`}>
-        {data ? formatAmount(data.tusdc) : "…"}
-      </td>
-      <td className={`${td} tabular-nums`}>
-        {data ? formatSol(data.lamports) : "…"}
-      </td>
-      <td className="py-2">
-        <button
-          type="button"
-          onClick={onSelect}
-          disabled={active}
-          className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium hover:bg-slate-50 disabled:border-transparent disabled:bg-transparent disabled:text-slate-500"
-        >
-          {active ? "Active" : `Act as ${actor.label}`}
-        </button>
-      </td>
-    </tr>
+    <li className={`${ROW} ${active ? "bg-stamp-wash" : ""}`} aria-current={active || undefined}>
+      <div className="col-start-1 row-start-1 min-w-0">
+        <p className="flex items-center gap-2 font-semibold">
+          <RoleMark shape={shape} />
+          {name}
+        </p>
+        {address && (
+          <a
+            href={explorerAddressUrl(address)}
+            target="_blank"
+            rel="noreferrer"
+            title={address.toBase58()}
+            className={`ml-[1.125rem] text-micro text-ink-soft ${linkClass}`}
+          >
+            {shortAddress(address)}
+          </a>
+        )}
+      </div>
+      <div className="col-start-2 row-start-1 justify-self-end md:col-start-5">
+        {active ? (
+          <span className="inline-block px-3.5 py-2 text-sm font-semibold text-stamp">Acting now</span>
+        ) : (
+          <Button kind="plain" onClick={onSelect}>
+            {action}
+          </Button>
+        )}
+      </div>
+      <p className="col-span-2 text-sm text-ink-soft md:col-span-1 md:col-start-2 md:row-start-1">{blurb}</p>
+      <p className="col-span-2 flex gap-4 text-sm md:contents">
+        <span className="md:col-start-3 md:row-start-1 md:text-right">
+          {publicKey ? (data ? <InlineAmount raw={data.tusdc} /> : <span className="text-ink-soft">loading</span>) : <span className="text-ink-soft">not connected</span>}
+        </span>
+        <span className="figures md:col-start-4 md:row-start-1 md:text-right">
+          {publicKey && data ? (
+            <>
+              {formatSol(data.lamports).replace(" SOL", "")}
+              <span className="ml-[0.2em] text-[0.8em] text-ink-soft">SOL</span>
+            </>
+          ) : null}
+        </span>
+      </p>
+    </li>
   );
 }
 
-function SeededDeal({
-  label,
-  address,
-  now,
-}: {
-  label: string;
-  address: string;
-  now: number;
-}) {
+function SeededDeal({ label, address, now }: { label: string; address: string; now: number }) {
+  const { publicKey } = useActor();
   const { data: deal, isLoading } = useDeal(address);
   return (
-    <div className="space-y-1">
-      <p className="text-sm font-semibold">
-        {label}{" "}
-        <Link
-          to={`/deal/${address}`}
-          className="font-mono text-xs font-normal text-indigo-700 underline"
-        >
-          {shortAddress(address)}
+    <li className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[minmax(0,8rem)_minmax(0,1fr)_auto] sm:items-baseline">
+      <p className="font-semibold">
+        <Link to={`/deal/${address}`} className={linkClass}>
+          {label}
         </Link>
       </p>
-      {isLoading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
-      ) : deal ? (
-        <DealCard deal={deal} now={now} />
-      ) : (
-        <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-          Not found. It may have been closed already, or not seeded yet.
-        </p>
-      )}
-    </div>
+      <p className="text-sm text-ink-soft">
+        {isLoading
+          ? "Loading this deal"
+          : deal
+            ? nextStep(deal, roleIn(deal, publicKey), publicKey, now).text
+            : `Not found at ${shortAddress(address)}. It may be closed already, or not seeded yet.`}
+      </p>
+      {deal && <InlineAmount raw={deal.total} className="sm:text-right" />}
+    </li>
   );
 }
 
 export default function Demo() {
-  const { demoActors, activeId, select } = useActor();
+  const { demoActors, activeId, select, actor } = useActor();
   const now = useChainNow();
+  const choose = (id: ActorId) => () => select(id);
+  const walletKey = actor?.kind === "wallet" ? actor.publicKey : null;
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <h1 className="text-2xl font-bold">Demo roles</h1>
-        <p className="max-w-3xl text-slate-700">
-          A deal has up to six people: the client, the freelancer (Worker),
-          three arbiters and anyone else. To show it on one screen, the
-          switcher in the header lets you act as any of them. Every action is
-          a real devnet transaction signed by that person&apos;s key. The
-          Passer-by has no part in any deal: use it to show that anyone can
-          release a payment once its timer is over, and that the money still
-          goes only to the client or the freelancer.
+    <div className="space-y-10">
+      <header className="max-w-[68ch] space-y-3">
+        <Heading level={1}>Demo roles</Heading>
+        <p className="text-ink-soft">
+          A deal has up to six people: the client, the freelancer, three arbiters and anyone else. To
+          show it on one screen, act as any of them here or with the switcher in the header. Every action
+          is a real devnet transaction signed by that person&apos;s key.
         </p>
-        <p className="max-w-3xl text-sm text-slate-600">
-          &quot;Your wallet&quot; switches back to your own wallet (for
-          example Phantom), which can play the client.
+        <p className="text-ink-soft">
+          The Passer-by has no part in any deal. Use it to show that anyone can release a payment once
+          its timer is over, and that the money still goes only to the client or the freelancer.
         </p>
-        <DemoNote />
-      </section>
+        <Notice>
+          <strong className="font-semibold">Demo keys are public.</strong> {DEMO_SECURITY_NOTE}
+        </Notice>
+      </header>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Demo people</h2>
+      <section className="space-y-4">
+        <Heading level={2}>The people</Heading>
         {demoActors.length === 0 ? (
-          <p className="text-sm text-red-700">
-            No demo people are configured in this build (VITE_DEMO_ACTORS).
+          <p className="text-sm text-void">
+            No demo people are configured in this build. Set VITE_DEMO_ACTORS and rebuild.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-slate-500">
-                  <th className="py-2 pr-4 font-medium">Role</th>
-                  <th className="py-2 pr-4 font-medium">Who</th>
-                  <th className="py-2 pr-4 font-medium">Address</th>
-                  <th className="py-2 pr-4 font-medium">Test dollars</th>
-                  <th className="py-2 pr-4 font-medium">SOL for fees</th>
-                  <th className="py-2 font-medium" />
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  className={`border-b border-slate-100 ${activeId === "wallet" ? "bg-indigo-50" : ""}`}
-                >
-                  <td className="py-2 pr-4" colSpan={5}>
-                    Your wallet
-                  </td>
-                  <td className="py-2">
-                    <button
-                      type="button"
-                      onClick={() => select("wallet")}
-                      disabled={activeId === "wallet"}
-                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium hover:bg-slate-50 disabled:border-transparent disabled:bg-transparent disabled:text-slate-500"
-                    >
-                      {activeId === "wallet" ? "Active" : "Use my wallet"}
-                    </button>
-                  </td>
-                </tr>
-                {demoActors.map((a) => (
-                  <ActorRow
-                    key={a.id}
-                    actor={a}
-                    active={activeId === a.id}
-                    onSelect={() => select(a.id)}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Sheet className="overflow-hidden">
+            <div
+              aria-hidden
+              className={`${ROW} hidden border-b border-rule text-sm text-ink-soft md:grid`}
+            >
+              <span>Role</span>
+              <span>Stands for</span>
+              <span className="text-right">Test dollars</span>
+              <span className="text-right">Fees</span>
+              <span />
+            </div>
+            <ul className="ledger">
+              <Row
+                shape="wallet"
+                name="Your wallet"
+                address={walletKey}
+                blurb="Your own wallet, for example Phantom. It can play the client."
+                publicKey={walletKey}
+                active={activeId === "wallet"}
+                action="Use my wallet"
+                onSelect={choose("wallet")}
+              />
+              {demoActors.map((a) => (
+                <Row
+                  key={a.id}
+                  shape={shapeForLabel(a.label)}
+                  name={a.label}
+                  address={a.publicKey}
+                  blurb={a.blurb}
+                  publicKey={a.publicKey}
+                  active={activeId === a.id}
+                  action={`Act as ${a.label}`}
+                  onSelect={choose(a.id)}
+                />
+              ))}
+            </ul>
+          </Sheet>
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Prepared deals</h2>
+      <section className="max-w-[68ch] space-y-4">
+        <Heading level={2}>Prepared deals</Heading>
         {DEMO_DEALS.length === 0 ? (
-          <p className="text-sm text-slate-600">
-            No prepared deals in this build (VITE_DEMO_DEALS). Find recent
-            deals under{" "}
-            <Link to="/deals" className="text-indigo-700 underline">
+          <p className="text-sm text-ink-soft">
+            This build has no prepared deals. Find recent deals under{" "}
+            <Link to="/deals" className={linkClass}>
               My deals
             </Link>
             , or{" "}
-            <Link to="/new" className="text-indigo-700 underline">
+            <Link to="/new" className={linkClass}>
               create one
             </Link>
             .
           </p>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <ul className="ledger border-y border-rule">
             {DEMO_DEALS.map((d) => (
-              <SeededDeal
-                key={d.label}
-                label={d.label}
-                address={d.address}
-                now={now}
-              />
+              <SeededDeal key={d.label} label={d.label} address={d.address} now={now} />
             ))}
-          </div>
+          </ul>
         )}
       </section>
     </div>

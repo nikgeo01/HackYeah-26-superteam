@@ -1,5 +1,6 @@
-// One deal in a list (/deals): counterparty, total, status, next step, progress, nearest deadline.
-// It only decides what to say; the deal page and the program decide what can actually happen.
+// One deal in a list (/deals): a ledger row with the counterparty, a phase sentence that ends with
+// what happens next, the nearest clock and the amount. It only decides what to say; the deal page
+// and the program decide what can actually happen.
 import { Link } from "react-router-dom";
 import type { PublicKey } from "@solana/web3.js";
 import { hasMajority, VOTE_NONE } from "@client/rules";
@@ -20,6 +21,9 @@ import {
   shortAddress,
 } from "../lib/format";
 import { useActor } from "../providers/ActorProvider";
+import { RoleMark, type RoleShape } from "./RoleSwitcher";
+import { Amount, splitAmount } from "./ui";
+import { Clock } from "./ui/Clock";
 
 /** A demo label (in demo mode) plus the short address, e.g. "Worker (AbCd…WxYz)". */
 export function PartyName({
@@ -35,10 +39,10 @@ export function PartyName({
       {demo ? (
         <>
           {demo.label}{" "}
-          <span className="text-slate-500">({shortAddress(address)})</span>
+          <span className="tnum text-ink-soft">({shortAddress(address)})</span>
         </>
       ) : (
-        <span className="font-mono">{shortAddress(address)}</span>
+        <span className="tnum">{shortAddress(address)}</span>
       )}
     </span>
   );
@@ -124,7 +128,9 @@ export function nextStep(
         `Review milestone ${submitted.index + 1}: approve or object (${left(submitted.reviewDeadline)} left, then silence pays).`,
       );
     if (disputed)
-      return wait(`The arbiters are voting on milestone ${disputed.index + 1}.`);
+      return wait(
+        `The arbiters are voting on milestone ${disputed.index + 1}. With no majority in ${left(disputed.voteDeadline)}, it splits 50/50.`,
+      );
     if (pending)
       return wait(
         `Waiting for delivery of milestone ${pending.index + 1} (due in ${left(pending.submitDeadline)}).`,
@@ -140,8 +146,23 @@ export function nextStep(
         `If the client says nothing, you are paid for milestone ${submitted.index + 1} in ${left(submitted.reviewDeadline)}.`,
       );
     if (disputed)
-      return wait(`The arbiters are voting on milestone ${disputed.index + 1}.`);
+      return wait(
+        `The arbiters are voting on milestone ${disputed.index + 1}. With no majority in ${left(disputed.voteDeadline)}, it splits 50/50.`,
+      );
   }
+  // Someone outside the deal: say where it stands and what the rule does next.
+  if (submitted)
+    return wait(
+      `Milestone ${submitted.index + 1} is in review. If the client says nothing, the freelancer is paid in ${left(submitted.reviewDeadline)}.`,
+    );
+  if (disputed)
+    return wait(
+        `The arbiters are voting on milestone ${disputed.index + 1}. With no majority in ${left(disputed.voteDeadline)}, it splits 50/50.`,
+      );
+  if (pending)
+    return wait(
+      `Waiting for delivery of milestone ${pending.index + 1} (due in ${left(pending.submitDeadline)}).`,
+    );
   return wait(dealStatusLabel(deal.status));
 }
 
@@ -169,13 +190,50 @@ export function nearestDeadline(
   return future.reduce((a, b) => (b.at < a.at ? b : a));
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  open: "bg-sky-100 text-sky-800",
-  active: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-slate-200 text-slate-700",
-};
+/** Which part of /deals a row belongs in. */
+export type DealGroup = "needs" | "waiting" | "finished";
 
-export function DealCard({
+export function dealGroup(deal: DealView, step: NextStep): DealGroup {
+  if (isFullySettled(deal)) return "finished";
+  if (deal.status === "cancelled" && !step.urgent) return "finished";
+  return step.urgent ? "needs" : "waiting";
+}
+
+/** A party named as briefly as possible: the demo label, or the short address. */
+function Who({
+  address,
+  shape,
+  actors,
+}: {
+  address: PublicKey;
+  shape: RoleShape;
+  actors: readonly DemoActor[];
+}) {
+  const demo = actors.find((a) => a.publicKey.equals(address));
+  const word = shape === "client" ? "Client" : "Freelancer";
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5" title={address.toBase58()}>
+      <RoleMark shape={shape} />
+      {demo ? (
+        <span className="truncate">{demo.label}</span>
+      ) : (
+        <span className="truncate">
+          <span className="sr-only">{word} </span>
+          <span className="tnum">{shortAddress(address)}</span>
+        </span>
+      )}
+    </span>
+  );
+}
+
+const ROW_AREAS =
+  "grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 [grid-template-areas:'who_amount'_'phase_clock'] md:grid-cols-[minmax(9rem,13rem)_minmax(0,1fr)_9.5rem_8.5rem] md:items-baseline md:[grid-template-areas:'who_phase_clock_amount']";
+
+/**
+ * One deal as a ledger row, linking to the deal page. On narrow screens it folds into two lines:
+ * who and how much, then what happens next and when.
+ */
+export function DealRow({
   deal,
   now,
   role: roleProp,
@@ -189,74 +247,76 @@ export function DealCard({
   const role = roleProp ?? roleIn(deal, publicKey);
   const step = nextStep(deal, role, publicKey, now);
   const deadline = nearestDeadline(deal, now);
+  const left = deadline ? deadline.at - now : 0;
+  const amount = splitAmount(formatAmount(deal.total));
+  const address = deal.address.toBase58();
   const settled = deal.settledCount;
   const count = deal.milestones.length;
-  const address = deal.address.toBase58();
 
   return (
     <Link
       to={`/deal/${address}`}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow"
+      className={`${ROW_AREAS} -mx-2 rounded-[var(--radius-control)] px-2 py-3 transition-colors hover:bg-ground/60 focus-visible:bg-ground/60 focus-visible:outline-offset-0`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-0.5">
-          <p className="text-lg font-semibold">{formatAmount(deal.total)}</p>
-          <p className="text-sm text-slate-600">
-            {role === "client" ? (
-              <>
-                To <PartyName address={deal.worker} actors={demoActors} />
-              </>
-            ) : role === "worker" ? (
-              <>
-                From <PartyName address={deal.client} actors={demoActors} />
-              </>
-            ) : (
-              <>
-                <PartyName address={deal.client} actors={demoActors} /> pays{" "}
-                <PartyName address={deal.worker} actors={demoActors} />
-              </>
-            )}
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE[deal.status] ?? ""}`}
-        >
-          {deal.status === "active" ? "In progress" : dealStatusLabel(deal.status)}
+      <span className="flex min-w-0 flex-col [grid-area:who]">
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm font-semibold text-ink">
+          {role === "client" ? (
+            <Who address={deal.worker} shape="worker" actors={demoActors} />
+          ) : role === "worker" ? (
+            <Who address={deal.client} shape="client" actors={demoActors} />
+          ) : (
+            <>
+              <Who address={deal.client} shape="client" actors={demoActors} />
+              <span className="font-normal text-ink-soft">pays</span>
+              <Who address={deal.worker} shape="worker" actors={demoActors} />
+            </>
+          )}
         </span>
-      </div>
+        <span className="text-micro text-ink-soft">
+          Deal <span className="tnum">{shortAddress(deal.address)}</span>, {settled} of {count} paid
+        </span>
+      </span>
 
-      <p
-        className={`mt-3 text-sm ${step.urgent ? "font-medium text-indigo-800" : "text-slate-700"}`}
+      <span
+        className={`min-w-0 text-sm leading-snug [grid-area:phase] ${
+          step.urgent ? "font-medium text-ink" : "text-ink-soft"
+        }`}
       >
-        {step.urgent && <span aria-hidden="true">→ </span>}
         {step.text}
-      </p>
+      </span>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span className="flex items-center gap-2">
-          <span
-            className="inline-flex gap-0.5"
-            aria-label={`${settled} of ${count} milestones paid out`}
-          >
-            {deal.milestones.map((m) => (
-              <span
-                key={m.index}
-                className={`h-2 w-4 rounded-sm ${m.status === "settled" ? "bg-emerald-500" : "bg-slate-200"}`}
-              />
-            ))}
-          </span>
-          {settled} of {count} paid out
-        </span>
+      <span className="flex flex-col items-end text-right [grid-area:clock] md:items-start md:text-left">
         {deadline && (
-          <span>
-            {deadline.what} in{" "}
-            <span className="font-mono tabular-nums">
-              {formatCountdown(deadline.at - now)}
-            </span>
-          </span>
+          <>
+            <Clock
+              text={formatCountdown(left)}
+              className={`text-sm font-semibold ${left < 60 ? "text-clock" : "text-ink"}`}
+            />
+            <span className="text-micro leading-tight text-ink-soft">{deadline.what}</span>
+          </>
         )}
-        <span className="ml-auto font-mono">{shortAddress(deal.address)}</span>
-      </div>
+      </span>
+
+      <span className="text-right [grid-area:amount]">
+        <Amount value={amount.value} symbol={amount.symbol} size="md" />
+      </span>
     </Link>
+  );
+}
+
+/** A single deal shown on its own (e.g. on /demo): one ledger row on a sheet. */
+export function DealCard({
+  deal,
+  now,
+  role,
+}: {
+  deal: DealView;
+  now: number;
+  role?: Role;
+}) {
+  return (
+    <div className="rounded-[var(--radius-sheet)] border border-rule bg-sheet px-4 py-1">
+      <DealRow deal={deal} now={now} role={role} />
+    </div>
   );
 }

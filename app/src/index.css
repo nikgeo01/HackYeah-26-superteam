@@ -1,9 +1,133 @@
 @import "tailwindcss";
 
-/* Keep the wallet-adapter button in line with the header. */
-.wallet-adapter-button-trigger {
-  height: 2.25rem;
-  font-size: 0.875rem;
-  padding: 0 1rem;
-  background-color: #4f46e5;
+/* Design tokens: see app/DESIGN.md. Tailwind exposes them as bg-ground, text-ink, border-rule, … */
+@theme {
+  --color-ground: #e6ede5;
+  --color-sheet: #f8faf6;
+  --color-rule: #c5d3c6;
+  --color-rule-soft: #dbe4db;
+  --color-ink: #1c2a39;
+  --color-ink-soft: #566573;
+  --color-stamp: #5631c4;
+  --color-stamp-deep: #42239f;
+  --color-stamp-wash: #ece6fb;
+  --color-clock: #a86412;
+  --color-clock-wash: #f6ead8;
+  --color-void: #b23a30;
+  --color-void-wash: #f7e3e0;
+
+  --font-sans: "Schibsted Grotesk Variable", "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* 1.25 scale on a 16px base */
+  --text-micro: 0.8rem;
+  --text-body: 1rem;
+  --text-lead: 1.25rem;
+  --text-title: 1.5625rem;
+  --text-heading: 1.953rem;
+  --text-amount: 2.441rem;
+  --text-display: 3.815rem;
+
+  --radius-sheet: 10px;
+  --radius-control: 6px;
+  --radius-tag: 3px;
+}
+
+@layer base {
+  html {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    line-height: 1.55;
+  }
+  ::selection {
+    background: var(--color-stamp-wash);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-stamp);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  input,
+  select,
+  textarea {
+    color: var(--color-ink);
+  }
+}
+
+@layer utilities {
+  /* Amounts: lining, proportional (this face's tabular period is figure-wide: "5 . 00"). */
+  .figures {
+    font-variant-numeric: lining-nums proportional-nums;
+  }
+  /* Clocks only: tabular digits so a countdown does not jitter. */
+  .tnum {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  /* Rows of a ledger: a ruling line under every row but the last. */
+  .ledger > * + * {
+    border-top: 1px solid var(--color-rule-soft);
+  }
+}
+
+/* The stamp: the one orchestrated moment. */
+@keyframes stamp-land {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--stamp-tilt, -6deg)) scale(1.4);
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt, -6deg)) scale(0.96);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt, -6deg)) scale(1);
+  }
+}
+.stamp-land {
+  animation: stamp-land 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* The review clock draining along the track. */
+@keyframes clock-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.clock-pulse {
+  animation: clock-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-land,
+  .clock-pulse {
+    animation: none;
+  }
+  * {
+    transition: none !important;
+  }
+}
+
+/* Wallet-adapter button, brought onto the system. */
+.wallet-adapter-button-trigger,
+.wallet-adapter-button {
+  height: 2.25rem !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  padding: 0 0.875rem !important;
+  border-radius: var(--radius-control) !important;
+  background-color: var(--color-ink) !important;
+  color: var(--color-sheet) !important;
+}
+.wallet-adapter-button-trigger:hover,
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: var(--color-stamp) !important;
 }
