@@ -1,4 +1,4 @@
-// Small form building blocks for the create-deal wizard.
+// Ledger-style form building blocks for the create-deal wizard (see app/DESIGN.md).
 import type { ReactNode } from "react";
 import { formatDuration } from "../../lib/format";
 import {
@@ -8,36 +8,50 @@ import {
   type TimeUnit,
 } from "./model";
 
-export const inputClass = (invalid: boolean) =>
-  `w-full rounded-md border bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 ${
-    invalid
-      ? "border-red-400 focus:ring-red-300"
-      : "border-slate-300 focus:ring-indigo-300"
-  }`;
+const cx = (...parts: (string | false | null | undefined)[]) =>
+  parts.filter(Boolean).join(" ");
 
+/** Sheet ground, rule border, ink when focused, void when wrong. The focus ring is stamp. */
+export const inputClass = (invalid: boolean) =>
+  cx(
+    "w-full min-w-0 rounded-[var(--radius-control)] border bg-sheet px-3 py-2 text-body text-ink",
+    "placeholder:text-ink-soft/55 focus:border-ink",
+    invalid ? "border-void" : "border-rule hover:border-ink/40",
+  );
+
+/** A label above the control in sentence case; help (ink-soft) or a fix-it error (void) under it. */
 export function Field({
   label,
   hint,
   error,
   htmlFor,
   children,
+  className,
 }: {
   label: ReactNode;
   hint?: ReactNode;
   error?: string;
   htmlFor?: string;
   children: ReactNode;
+  className?: string;
 }) {
+  const noteId = htmlFor ? `${htmlFor}-note` : undefined;
   return (
-    <div className="space-y-1">
-      <label htmlFor={htmlFor} className="block text-sm font-medium">
+    <div className={cx("space-y-1.5", className)}>
+      <label htmlFor={htmlFor} className="block text-sm font-semibold text-ink">
         {label}
       </label>
       {children}
       {error ? (
-        <p className="text-xs text-red-700">{error}</p>
+        <p id={noteId} className="text-sm text-void">
+          {error}
+        </p>
       ) : (
-        hint && <p className="text-xs text-slate-500">{hint}</p>
+        hint && (
+          <p id={noteId} className="max-w-[60ch] text-sm text-ink-soft">
+            {hint}
+          </p>
+        )
       )}
     </div>
   );
@@ -56,58 +70,56 @@ export function DurationInput({
   invalid: boolean;
 }) {
   const secs = durationSecs(value);
+  // Only spell it out when the words add something ("90 minutes" -> "1 hour 30 minutes").
+  const words = secs !== null && !invalid ? formatDuration(secs) : null;
+  const echo = words && words !== `${value.value.trim()} ${value.unit}` && words !== `1 ${value.unit.replace(/s$/, "")}`;
   return (
-    <div className="flex items-center gap-2">
-      <input
-        id={id}
-        inputMode="decimal"
-        value={value.value}
-        onChange={(e) => onChange({ ...value, value: e.target.value })}
-        className={`${inputClass(invalid)} max-w-28`}
-      />
-      <select
-        aria-label="Unit"
-        value={value.unit}
-        onChange={(e) =>
-          onChange({ ...value, unit: e.target.value as TimeUnit })
-        }
-        className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm"
-      >
-        {TIME_UNITS.map((u) => (
-          <option key={u} value={u}>
-            {u}
-          </option>
-        ))}
-      </select>
-      {secs !== null && !invalid && (
-        <span className="text-xs text-slate-500">{formatDuration(secs)}</span>
-      )}
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex">
+        <input
+          id={id}
+          inputMode="decimal"
+          value={value.value}
+          aria-invalid={invalid || undefined}
+          aria-describedby={`${id}-note`}
+          onChange={(e) => onChange({ ...value, value: e.target.value })}
+          className={cx(inputClass(invalid), "w-20 rounded-r-none")}
+        />
+        <select
+          aria-label="Unit"
+          value={value.unit}
+          onChange={(e) => onChange({ ...value, unit: e.target.value as TimeUnit })}
+          className="-ml-px rounded-r-[var(--radius-control)] border border-rule bg-ground/60 py-2 pl-2 pr-1 text-body text-ink hover:border-ink/40 focus:border-ink"
+        >
+          {TIME_UNITS.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
+      </div>
+      {echo && <span className="text-sm text-ink-soft">{words}</span>}
     </div>
   );
 }
 
-export function Button({
+/** A section of a step: a heading and a short line of context, then its fields. */
+export function Part({
+  title,
+  intro,
   children,
-  variant = "secondary",
-  className = "",
-  ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "link";
+}: {
+  title: string;
+  intro?: ReactNode;
+  children: ReactNode;
 }) {
-  const styles = {
-    primary:
-      "rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700",
-    secondary:
-      "rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50",
-    link: "text-sm font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900",
-  }[variant];
   return (
-    <button
-      type="button"
-      className={`${styles} disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      {...rest}
-    >
+    <section className="space-y-4 border-t border-rule-soft pt-6 first:border-t-0 first:pt-0">
+      <div className="space-y-1">
+        <h2 className="text-lead font-semibold leading-snug">{title}</h2>
+        {intro && <p className="max-w-[62ch] text-sm text-ink-soft">{intro}</p>}
+      </div>
       {children}
-    </button>
+    </section>
   );
 }
