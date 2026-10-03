@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No attribution lines in commit messages
+        run: |
+          if git log --format=%B HEAD | grep -Eiq 'co-authored-by|generated with|claude|anthropic'; then
+            echo "A commit message carries an attribution line (see CONTRIBUTING.md)."
+            exit 1
+          fi
+
+  program:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build toolchain image
+        run: docker build --target toolchain -t escrow-ci .
+      - name: Format, lint, build, test
+        run: |
+          docker run --rm -v "$PWD":/work -w /work escrow-ci bash -lc '
+            set -e
+            npm ci
+            cargo fmt --all -- --check
+            cargo clippy -p milestone-escrow --all-targets -- -D warnings
+            anchor build
+            cargo test -p milestone-escrow
+            npx tsc --noEmit
+            anchor test --skip-build
+          '

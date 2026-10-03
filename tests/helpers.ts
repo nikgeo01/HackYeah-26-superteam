@@ -372,7 +372,8 @@ export async function assertVaultInvariant(deal: PublicKeyT) {
       owed += BigInt(m.amount.toString()) + BigInt(m.depositLocked.toString());
     }
   }
-  expect(await balance(vaultPda(deal))).to.be.at.least(owed);
+  const held = await balance(vaultPda(deal));
+  expect(held >= owed, `vault holds ${held}, owes ${owed}`).to.equal(true);
 }
 
 export const statusOf = (s: object) => Object.keys(s)[0];

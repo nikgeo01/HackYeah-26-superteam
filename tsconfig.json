@@ -3,13 +3,24 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["esnext"],
-    "types": ["mocha", "node"],
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "mocha",
+      "node"
+    ],
     "strict": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "include": ["tests/**/*.ts", "migrations/**/*.ts"]
+  "include": [
+    "tests/**/*.ts",
+    "client/**/*.ts",
+    "scripts/**/*.ts",
+    "idl/**/*.ts"
+  ]
 }
