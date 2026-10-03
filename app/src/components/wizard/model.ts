@@ -110,14 +110,21 @@ export function initialDraft(defaultAttestor: string): DealDraft {
   };
 }
 
-/** "Demo timings" preset: accept 10 min, each milestone due 10 min, review 45 s, vote 60 s. */
+/**
+ * "Demo timings" preset: accept 10 min, each milestone due 10 min, review 45 s, vote 60 s.
+ * Empty amounts become 50 so a first-time visitor can go straight to review.
+ */
 export function withDemoTimings(d: DealDraft): DealDraft {
   return {
     ...d,
     accept: dur(10, "minutes"),
     review: dur(45, "seconds"),
     vote: dur(60, "seconds"),
-    milestones: d.milestones.map((m) => ({ ...m, due: dur(10, "minutes") })),
+    milestones: d.milestones.map((m) => ({
+      ...m,
+      amount: m.amount.trim() === "" ? "50" : m.amount,
+      due: dur(10, "minutes"),
+    })),
   };
 }
 

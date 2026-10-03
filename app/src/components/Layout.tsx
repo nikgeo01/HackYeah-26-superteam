@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useActor } from "../providers/ActorProvider";
 import { DemoNote, DevnetChip } from "./DemoNote";
@@ -22,6 +23,15 @@ function Wordmark() {
   );
 }
 
+/** A new page starts at its top, like a normal website. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export function Layout() {
   const { actor } = useActor();
   // In demo mode the wallet button stays available so the real wallet can be the client.
@@ -29,6 +39,7 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <ScrollToTop />
       <header className="border-b border-rule bg-sheet">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-3">
           <div className="flex items-baseline gap-3">
@@ -36,6 +47,11 @@ export function Layout() {
             <DevnetChip />
           </div>
           <nav className="flex flex-wrap items-center gap-6" aria-label="Main">
+            {DEMO_MODE && (
+              <NavLink to="/demo" className={navClass}>
+                Guided demo
+              </NavLink>
+            )}
             <NavLink to="/deals" className={navClass}>
               My deals
             </NavLink>
@@ -45,11 +61,6 @@ export function Layout() {
             <NavLink to="/how" className={navClass}>
               How it works
             </NavLink>
-            {DEMO_MODE && (
-              <NavLink to="/demo" className={navClass}>
-                Demo roles
-              </NavLink>
-            )}
           </nav>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <RoleSwitcher />

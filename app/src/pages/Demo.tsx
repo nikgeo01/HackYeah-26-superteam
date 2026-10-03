@@ -1,7 +1,7 @@
 // Demo page (PLAN 4.1, 4.7, ADR-10), only routed when VITE_DEMO_MODE=true: every demo actor as
 // a ledger row with balances and an "Act as" button, then the pre-seeded deals as quiet rows.
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { PublicKey } from "@solana/web3.js";
 import { useActor, type ActorId } from "../providers/ActorProvider";
 import { useBalances } from "../hooks/useBalances";
@@ -13,7 +13,7 @@ import { Button, Heading, Notice, Sheet } from "../components/ui";
 import { InlineAmount } from "../components/ui/InlineAmount";
 import { explorerAddressUrl, formatSol, shortAddress } from "../lib/format";
 import { DEMO_DEALS_RAW } from "../lib/env";
-import { DEMO_SECURITY_NOTE } from "../lib/actors";
+import { DEMO_SECURITY_NOTE, type DemoRoleId } from "../lib/actors";
 import { roleIn } from "../lib/deals";
 import { toPublicKey } from "../lib/pdas";
 
@@ -108,24 +108,95 @@ function Row({
   );
 }
 
+/** What each seeded deal (scripts/seed-deals.ts) shows, and who to be when you open it. */
+const SCENARIOS: Record<string, { title: string; shows: string; as: DemoRoleId; key?: boolean }> = {
+  D1: {
+    title: "A new deal, waiting for the freelancer",
+    shows: "The money is already in escrow. Accept the deal, then deliver the first milestone.",
+    as: "worker",
+  },
+  D2: {
+    title: "Work delivered, the client is reviewing",
+    shows: "Approve and pay with one click, or object and send it to the arbiters.",
+    as: "client",
+  },
+  D3: {
+    title: "The client stayed silent",
+    shows: "The review time ran out with no answer. A stranger releases the payment, and it can only go to the freelancer. This is where the platform disappears.",
+    as: "passerby",
+    key: true,
+  },
+  D4: {
+    title: "A dispute, one vote already in",
+    shows: "Cast the deciding vote. The vote and the payout happen in the same transaction.",
+    as: "arbiter2",
+  },
+  D5: {
+    title: "The arbiters ran out of time",
+    shows: "No majority before the deadline, so anyone can settle it as a 50/50 split.",
+    as: "passerby",
+  },
+  D6: {
+    title: "The pull request is merged",
+    shows: "Submit a proof that GitHub merged the agreed pull request. The program checks it and pays.",
+    as: "worker",
+  },
+  D7: {
+    title: "The pull request is still open",
+    shows: "Merge it on GitHub, then prove the merge here to release the payment.",
+    as: "worker",
+  },
+  D8: {
+    title: "A finished deal",
+    shows: "Everything is paid out. Look through its transactions on the public record, then close it.",
+    as: "passerby",
+  },
+};
+
 function SeededDeal({ label, address, now }: { label: string; address: string; now: number }) {
-  const { publicKey } = useActor();
+  const { publicKey, demoActors, select, activeId } = useActor();
+  const navigate = useNavigate();
   const { data: deal, isLoading } = useDeal(address);
+  const scenario = SCENARIOS[label];
+  const actAs = scenario ? demoActors.find((a) => a.id === scenario.as) : undefined;
+  const open = () => {
+    if (actAs) select(actAs.id);
+    navigate(`/deal/${address}`);
+  };
   return (
-    <li className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[minmax(0,8rem)_minmax(0,1fr)_auto] sm:items-baseline">
-      <p className="font-semibold">
-        <Link to={`/deal/${address}`} className={linkClass}>
-          {label}
-        </Link>
-      </p>
-      <p className="text-sm text-ink-soft">
-        {isLoading
-          ? "Loading this deal"
-          : deal
-            ? nextStep(deal, roleIn(deal, publicKey), publicKey, now).text
-            : `Not found at ${shortAddress(address)}. It may be closed already, or not seeded yet.`}
-      </p>
-      {deal && <InlineAmount raw={deal.total} className="sm:text-right" />}
+    <li
+      className={`grid gap-x-6 gap-y-2 px-4 py-4 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center ${scenario?.key ? "bg-stamp-wash" : ""}`}
+    >
+      <div className="min-w-0 space-y-1">
+        <p className="font-semibold text-ink">
+          {scenario?.title ?? label}
+          {scenario?.key && <span className="ml-2 text-sm font-semibold text-stamp">The key moment</span>}
+        </p>
+        {scenario && <p className="max-w-[62ch] text-sm text-ink">{scenario.shows}</p>}
+        <p className="text-micro text-ink-soft">
+          {isLoading
+            ? "Loading this deal"
+            : deal
+              ? (
+                  <>
+                    <InlineAmount raw={deal.total} /> · Now:{" "}
+                    {nextStep(deal, roleIn(deal, actAs?.publicKey ?? publicKey), actAs?.publicKey ?? publicKey, now).text}
+                  </>
+                )
+              : `Not found at ${shortAddress(address)}. It may be closed already, or not seeded yet.`}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        {actAs ? (
+          <Button kind={scenario?.key ? "act" : "plain"} onClick={open} disabled={!deal && !isLoading}>
+            {activeId === actAs.id ? "Open" : `Open as ${actAs.label}`}
+          </Button>
+        ) : (
+          <Link to={`/deal/${address}`} className={linkClass}>
+            Open
+          </Link>
+        )}
+      </div>
     </li>
   );
 }
@@ -135,27 +206,76 @@ export default function Demo() {
   const now = useChainNow();
   const choose = (id: ActorId) => () => select(id);
   const walletKey = actor?.kind === "wallet" ? actor.publicKey : null;
+  const navigate = useNavigate();
+  const startAsClient = () => {
+    select("client");
+    navigate("/new");
+  };
 
   return (
     <div className="space-y-10">
       <header className="max-w-[68ch] space-y-3">
-        <Heading level={1}>Demo roles</Heading>
-        <p className="text-ink-soft">
-          A deal has up to six people: the client, the freelancer, three arbiters and anyone else. To
-          show it on one screen, act as any of them here or with the switcher in the header. Every action
-          is a real devnet transaction signed by that person&apos;s key.
+        <Heading level={1}>Guided demo</Heading>
+        <p className="text-lead leading-snug text-ink">
+          A deal has a client, a freelancer, three arbiters and the rest of the world. Here you can be
+          any of them, with no wallet. Every button you press sends a real transaction on Solana
+          devnet, signed by that person&apos;s key, and you can check each one on Solana Explorer.
         </p>
-        <p className="text-ink-soft">
-          The Passer-by has no part in any deal. Use it to show that anyone can release a payment once
-          its timer is over, and that the money still goes only to the client or the freelancer.
-        </p>
-        <Notice>
-          <strong className="font-semibold">Demo keys are public.</strong> {DEMO_SECURITY_NOTE}
-        </Notice>
       </header>
 
       <section className="space-y-4">
-        <Heading level={2}>The people</Heading>
+        <div className="max-w-[68ch] space-y-1">
+          <Heading level={2}>Start from the beginning</Heading>
+          <p className="text-ink-soft">
+            Be the client and create a deal: the demo freelancer and arbiters are filled in for you.
+            Then switch to the freelancer to accept and deliver, and watch the review clock run out.
+          </p>
+        </div>
+        <Button onClick={startAsClient} disabled={!demoActors.some((a) => a.id === "client")}>
+          Create a deal as the client
+        </Button>
+      </section>
+
+      <section className="space-y-4">
+        <div className="max-w-[68ch] space-y-1">
+          <Heading level={2}>Or jump to a moment</Heading>
+          <p className="text-ink-soft">
+            These deals were prepared ahead of time, each stopped at an interesting point. Opening one
+            switches you to the right person for that moment.
+          </p>
+        </div>
+        {DEMO_DEALS.length === 0 ? (
+          <p className="text-sm text-ink-soft">
+            This build has no prepared deals. Find recent deals under{" "}
+            <Link to="/deals" className={linkClass}>
+              My deals
+            </Link>
+            , or{" "}
+            <Link to="/new" className={linkClass}>
+              create one
+            </Link>
+            .
+          </p>
+        ) : (
+          <Sheet className="overflow-hidden">
+            <ul className="ledger">
+              {DEMO_DEALS.map((d) => (
+                <SeededDeal key={d.label} label={d.label} address={d.address} now={now} />
+              ))}
+            </ul>
+          </Sheet>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <div className="max-w-[68ch] space-y-1">
+          <Heading level={2}>All the people</Heading>
+          <p className="text-ink-soft">
+            Switch freely, here or with the &ldquo;You:&rdquo; menu in the header. The Passer-by has no
+            part in any deal: use it to show that anyone can trigger a payout once its timer is over,
+            and that the money still only goes to the client or the freelancer.
+          </p>
+        </div>
         {demoActors.length === 0 ? (
           <p className="text-sm text-void">
             No demo people are configured in this build. Set VITE_DEMO_ACTORS and rebuild.
@@ -201,28 +321,9 @@ export default function Demo() {
         )}
       </section>
 
-      <section className="max-w-[68ch] space-y-4">
-        <Heading level={2}>Prepared deals</Heading>
-        {DEMO_DEALS.length === 0 ? (
-          <p className="text-sm text-ink-soft">
-            This build has no prepared deals. Find recent deals under{" "}
-            <Link to="/deals" className={linkClass}>
-              My deals
-            </Link>
-            , or{" "}
-            <Link to="/new" className={linkClass}>
-              create one
-            </Link>
-            .
-          </p>
-        ) : (
-          <ul className="ledger border-y border-rule">
-            {DEMO_DEALS.map((d) => (
-              <SeededDeal key={d.label} label={d.label} address={d.address} now={now} />
-            ))}
-          </ul>
-        )}
-      </section>
+      <Notice>
+        <strong className="font-semibold">Demo keys are public.</strong> {DEMO_SECURITY_NOTE}
+      </Notice>
     </div>
   );
 }

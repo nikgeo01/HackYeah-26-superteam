@@ -177,6 +177,80 @@ function Specimen() {
   );
 }
 
+/* ---------- A deal in four steps ---------- */
+
+const STEPS: { title: string; body: string }[] = [
+  {
+    title: "The client puts the money in escrow",
+    body: "Before any work starts, the client moves the full payment into a vault on Solana. We call this locking: the money is out of the client's hands, but nobody, not even us, can take it. Only the deal's rules can move it.",
+  },
+  {
+    title: "The freelancer accepts and delivers",
+    body: "The freelancer can see the money is really there before starting. The job is split into milestones, and each one is delivered and paid on its own.",
+  },
+  {
+    title: "The client reviews in a fixed time",
+    body: "After each delivery the client has a review time to approve or object. If they say nothing, silence counts as yes: anyone can then release the payment to the freelancer.",
+  },
+  {
+    title: "Disagreements go to three arbiters",
+    body: "If the client objects, three arbiters picked by both sides at the start vote. Two matching votes decide. They can never receive the money, and if they don't decide in time it is split 50/50.",
+  },
+];
+
+function Steps() {
+  return (
+    <section id="steps" aria-labelledby="steps-title" className="scroll-mt-6 space-y-4">
+      <h2 id="steps-title" className="text-title font-semibold leading-snug tracking-[-0.01em]">
+        How a deal works, in four steps
+      </h2>
+      <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {STEPS.map((step, i) => (
+          <li key={step.title}>
+            <Sheet as="div" className="h-full space-y-2 px-5 py-5">
+              <span className="figures block text-title font-semibold leading-none text-stamp">
+                {i + 1}
+              </span>
+              <h3 className="font-semibold leading-snug text-ink">{step.title}</h3>
+              <p className="text-sm text-ink-soft">{step.body}</p>
+            </Sheet>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+const WORDS: { word: string; meaning: string }[] = [
+  { word: "Escrow, the vault", meaning: "Where the locked money waits. It belongs to the program, so no person holds a key." },
+  { word: "Milestone", meaning: "One piece of the job with its own amount, paid on its own." },
+  { word: "Review time", meaning: "How long the client has to approve or object after a delivery." },
+  { word: "Objection deposit", meaning: "A small amount the client puts down to object, so objecting is not free. It goes to whoever wins." },
+  { word: "Arbiters", meaning: "Three people both sides agree on at the start. They vote on disputes and can never be paid from the deal." },
+  { word: "Passer-by", meaning: "Anyone at all. Once a timer runs out, even a stranger can trigger the payout the rules already decided." },
+  { word: "tUSDC and devnet", meaning: "Test dollars on Solana's public test network. Real transactions, no real value." },
+];
+
+function Words() {
+  return (
+    <section aria-labelledby="words" className="space-y-4">
+      <h2 id="words" className="text-title font-semibold leading-snug tracking-[-0.01em]">
+        Words you will see
+      </h2>
+      <Sheet as="div" className="px-5 py-2 sm:px-7">
+        <dl className="ledger">
+          {WORDS.map((w) => (
+            <div key={w.word} className="grid gap-x-6 gap-y-0.5 py-3 md:grid-cols-[13rem_minmax(0,1fr)] md:items-baseline">
+              <dt className="font-semibold text-ink">{w.word}</dt>
+              <dd className="text-ink-soft">{w.meaning}</dd>
+            </div>
+          ))}
+        </dl>
+      </Sheet>
+    </section>
+  );
+}
+
 /* ---------- What replaces the platform ---------- */
 
 const JOBS: { job: string; platform: string; kept: string }[] = [
@@ -263,23 +337,39 @@ function TryIt() {
         network fees are paid in free devnet SOL.
       </p>
       <ol className="ledger max-w-2xl">
-        <Step n={1} title={actor ? "You are connected" : "Connect a wallet"}>
-          {actor ? (
-            <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-soft">
-              Acting as
-              <RoleMark shape={shapeForLabel(actor.label)} />
-              <span className="font-semibold text-ink">{actor.label}</span>
-              <span className="tnum">({shortAddress(actor.publicKey)})</span>
+        {DEMO_MODE ? (
+          <Step n={1} title="Pick who you are">
+            <p className="text-sm text-ink-soft">
+              Demo mode has a ready key for the client, the freelancer, three arbiters and a
+              passer-by. Switch between them with the &ldquo;You:&rdquo; menu in the top right, or on
+              the demo page.
             </p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-3">
+            {actor && (
+              <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-soft">
+                Right now you are
+                <RoleMark shape={shapeForLabel(actor.label)} />
+                <span className="font-semibold text-ink">{actor.label}</span>
+                <span className="tnum">({shortAddress(actor.publicKey)})</span>
+              </p>
+            )}
+            <ButtonLink to="/demo" kind="plain">
+              Open the guided demo
+            </ButtonLink>
+          </Step>
+        ) : (
+          <Step n={1} title={actor ? "You are connected" : "Connect a wallet"}>
+            {actor ? (
+              <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-soft">
+                Acting as
+                <RoleMark shape={shapeForLabel(actor.label)} />
+                <span className="font-semibold text-ink">{actor.label}</span>
+                <span className="tnum">({shortAddress(actor.publicKey)})</span>
+              </p>
+            ) : (
               <WalletMultiButton />
-              {DEMO_MODE && (
-                <span className="text-sm text-ink-soft">or pick a demo role in the header</span>
-              )}
-            </div>
-          )}
-        </Step>
+            )}
+          </Step>
+        )}
         <Step n={2} title="Get test dollars">
           <div className="flex flex-wrap items-center gap-3">
             <FaucetButton />
@@ -317,13 +407,41 @@ export default function Landing() {
       <section className="grid items-center gap-8 pt-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-14">
         <Specimen />
         <div className="space-y-5 lg:order-first">
+          <p className="text-body font-semibold text-stamp">
+            Escrow for freelance work, with no platform in the middle
+          </p>
           <h1 className="max-w-[16ch] text-[clamp(2.25rem,5.4vw,3.815rem)] font-[680] leading-[1.02] tracking-[-0.03em] text-ink">
             Nobody has to go first.
           </h1>
           <p className="max-w-[46ch] text-lead leading-snug text-ink">
-            The client locks the whole payment before you start. You deliver one milestone at a
-            time, and if they say nothing within the review time, a public rule pays you.
+            A client and a freelancer who have never met can&rsquo;t trust each other with money.
+            Kept keeps the payment safe in a vault on Solana that no person controls, and public rules
+            decide when it moves.
           </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {DEMO_MODE ? (
+              <ButtonLink to="/demo" kind="act" size="lg">
+                Try the guided demo
+              </ButtonLink>
+            ) : (
+              <ButtonLink to="/new" kind="act" size="lg">
+                Create a deal
+              </ButtonLink>
+            )}
+            <button
+              type="button"
+              onClick={() => document.getElementById("steps")?.scrollIntoView({ behavior: "smooth" })}
+              className="inline-flex items-center rounded-[var(--radius-control)] px-3.5 py-3 text-body font-semibold text-ink-soft hover:bg-ground hover:text-ink"
+            >
+              How a deal works
+            </button>
+          </div>
+          {DEMO_MODE && (
+            <p className="text-sm text-ink-soft">
+              No wallet or setup needed. Every click is a real transaction on Solana devnet, with test
+              money.
+            </p>
+          )}
         </div>
       </section>
 
@@ -339,8 +457,10 @@ export default function Landing() {
         </p>
       </section>
 
+      <Steps />
       <Jobs />
       <TryIt />
+      <Words />
     </div>
   );
 }
