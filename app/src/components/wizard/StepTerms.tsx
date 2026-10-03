@@ -74,10 +74,11 @@ export function StepTerms({
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[var(--radius-control)] border border-dashed border-rule px-3 py-2.5 text-sm">
         <span className="text-ink-soft">
-          Trying it out? Short timers let you see every rule play out in a few minutes.
+          Trying it out? Short timers (45 seconds to review) and sample amounts let you see every
+          rule play out in a few minutes.
         </span>
         <Button kind="plain" onClick={() => setDraft(withDemoTimings(draft))}>
-          Use demo timings
+          Use demo timings and amounts
         </Button>
       </div>
 

@@ -1,5 +1,5 @@
 // Create-deal wizard (PLAN 4.1, WP-22): people, milestones and timers, review and lock funds.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PublicKey } from "@solana/web3.js";
 import { useActor } from "../providers/ActorProvider";
@@ -26,7 +26,11 @@ import {
 const STEPS = ["People", "Milestones and timers", "Review and lock"] as const;
 
 export default function NewDeal() {
-  const { publicKey: client } = useActor();
+  const { publicKey: client, actor, demoMode, demoActors, select } = useActor();
+  const demoClient = demoActors.find((a) => a.id === "client");
+  // In the demo, creating a deal as an arbiter or the freelancer is almost always a slip.
+  const wrongRole =
+    demoMode && actor?.kind === "demo" && actor.id !== "client" && demoClient !== undefined;
   const program = useProgram();
   const { send, busy } = useTx();
   const navigate = useNavigate();
@@ -39,6 +43,11 @@ export default function NewDeal() {
   const [prChecks, setPrChecks] = useState<Record<number, PrCheck>>({});
   const [checking, setChecking] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Each step starts at the top of the page, not where the last one was scrolled to.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   const validated = useMemo(
     () => validateDraft(draft, client),
@@ -121,7 +130,9 @@ export default function NewDeal() {
       return { instructions: [built.ix] };
     });
     if (signature && created.deal)
-      navigate(`/deal/${created.deal.toBase58()}`);
+      navigate(`/deal/${created.deal.toBase58()}`, {
+        state: { created: signature, total: formatAmount(total) },
+      });
   };
 
   const lockLabel =
@@ -135,10 +146,24 @@ export default function NewDeal() {
       <div className="max-w-[62ch] space-y-2">
         <Heading level={1}>New deal</Heading>
         <p className="text-ink-soft">
-          You lock the whole payment now. It is released milestone by milestone under the rules you
-          set here, and nobody can change them afterwards.
+          You are the client. In three steps you name the people, split the job into milestones, and
+          then put the full payment into escrow: a vault on Solana that only this deal&apos;s rules
+          can open. The freelancer sees the money is there before starting, and is paid milestone by
+          milestone. Once created, nobody can change the rules, including you and us.
         </p>
       </div>
+
+      {wrongRole && actor && (
+        <Notice tone="clock" className="flex flex-wrap items-center justify-between gap-3">
+          <span>
+            You are acting as <strong className="font-semibold">{actor.label}</strong>. A deal is
+            created and paid for by the client.
+          </span>
+          <Button kind="plain" onClick={() => select("client")}>
+            Switch to Client
+          </Button>
+        </Notice>
+      )}
 
       <nav aria-label="Steps">
         <ol className="flex items-start gap-2 sm:gap-3">

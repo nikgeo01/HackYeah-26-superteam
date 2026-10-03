@@ -1,17 +1,18 @@
 // /deal/:address (PLAN 4.1, 4.3, 4.4): one ledger sheet with the milestone track, role-aware actions,
 // countdowns on chain time, receipts. The page only picks buttons; the program decides.
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useDeal } from "../hooks/useDeals";
 import { useActor } from "../providers/ActorProvider";
 import { useChainNow } from "../providers/ChainTimeProvider";
 import { judgeIndex, roleIn, type DealView } from "../lib/deals";
 import { explainError } from "../lib/errors";
 import { ErrorBanner } from "../components/ErrorDetails";
-import { Heading, Sheet } from "../components/ui";
+import { Button, Heading, Notice, Sheet } from "../components/ui";
+import { ExplorerButton } from "../components/ExplorerButton";
 import type { Finished } from "../components/deal/ActionBar";
 import { DealSheet } from "../components/deal/DealSheet";
-import { LINK, TxLink } from "../components/deal/common";
+import { LINK } from "../components/deal/common";
 
 function Centered({
   title,
@@ -28,6 +29,36 @@ function Centered({
         Back to my deals
       </Link>
     </Sheet>
+  );
+}
+
+/** Shown once, right after the client created the deal: what just happened and how to check it. */
+function CreatedBanner({ signature, total }: { signature: string; total: string }) {
+  const [open, setOpen] = useState(true);
+  const { demoMode, activeId, select } = useActor();
+  if (!open) return null;
+  const offerWorker = demoMode && activeId === "client";
+  return (
+    <Notice tone="move" className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <span className="max-w-[60ch] space-y-0.5">
+        <span className="block font-semibold">The deal is created and {total} is in escrow.</span>
+        <span className="block text-ink-soft">
+          The money left your account and now sits in the deal&apos;s vault on Solana. Next, the
+          freelancer accepts the deal.
+        </span>
+      </span>
+      <span className="flex flex-wrap items-center gap-2">
+        <ExplorerButton signature={signature} kind="act" />
+        {offerWorker && (
+          <Button kind="plain" onClick={() => select("worker")}>
+            Continue as the freelancer
+          </Button>
+        )}
+        <Button kind="quiet" onClick={() => setOpen(false)}>
+          Hide
+        </Button>
+      </span>
+    </Notice>
   );
 }
 
@@ -68,6 +99,7 @@ function DealBody({
 
 export default function DealDetail() {
   const { address } = useParams();
+  const created = (useLocation().state ?? null) as { created?: string; total?: string } | null;
   const { data: deal, isLoading, error, invalidAddress } = useDeal(address);
   const [finished, setFinished] = useState<
     (Finished & { address: string }) | null
@@ -99,7 +131,7 @@ export default function DealDetail() {
       return (
         <Centered title="Done">
           <p className="text-ink">{finished.title}</p>
-          <TxLink signature={finished.signature} />
+          <ExplorerButton signature={finished.signature} kind="act" />
         </Centered>
       );
     return (
@@ -113,10 +145,15 @@ export default function DealDetail() {
   }
 
   return (
-    <DealBody
-      key={deal.address.toBase58()}
-      deal={deal}
-      onFinished={(f) => setFinished({ ...f, address: address ?? "" })}
-    />
+    <>
+      {created?.created && (
+        <CreatedBanner signature={created.created} total={created.total ?? "the payment"} />
+      )}
+      <DealBody
+        key={deal.address.toBase58()}
+        deal={deal}
+        onFinished={(f) => setFinished({ ...f, address: address ?? "" })}
+      />
+    </>
   );
 }

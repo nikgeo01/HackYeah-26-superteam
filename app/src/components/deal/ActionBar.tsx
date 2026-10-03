@@ -76,9 +76,10 @@ function AcceptTerms({ deal }: { deal: DealView }) {
           object. If they say nothing, you are paid.
         </li>
         <li>
-          An objection locks a deposit of{" "}
-          {deal.disputeDeposit > 0n ? formatAmount(deal.disputeDeposit) : "nothing"} from the
-          client. The arbiters then have {formatDuration(deal.voteWindowSecs)} to vote; with no
+          {deal.disputeDeposit > 0n
+            ? `To object, the client must lock a deposit of ${formatAmount(deal.disputeDeposit)}.`
+            : "The client can object for free (this deal has no objection deposit)."}{" "}
+          The arbiters then have {formatDuration(deal.voteWindowSecs)} to vote; with no
           majority the payment is split 50/50.
         </li>
         <li>
