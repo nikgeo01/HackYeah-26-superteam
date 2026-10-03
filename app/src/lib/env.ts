@@ -20,3 +20,5 @@ export const DEFAULT_ATTESTOR =
   "0x244897572368eadf65bfbc5aec98d8e5443a9072";
 export const DEMO_MODE = str(env.VITE_DEMO_MODE).toLowerCase() === "true";
 export const DEMO_ACTORS_RAW = DEMO_MODE ? str(env.VITE_DEMO_ACTORS) : "";
+/** Optional JSON `{ "D1": "<deal address>", ... }` of pre-seeded deals, listed on /demo. */
+export const DEMO_DEALS_RAW = DEMO_MODE ? str(env.VITE_DEMO_DEALS) : "";

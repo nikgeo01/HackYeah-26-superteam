@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_DEFAULT_ATTESTOR?: string;
   readonly VITE_DEMO_MODE?: string;
   readonly VITE_DEMO_ACTORS?: string;
+  readonly VITE_DEMO_DEALS?: string;
 }
 
 interface ImportMeta {
