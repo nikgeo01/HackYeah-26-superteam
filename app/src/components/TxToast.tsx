@@ -1,12 +1,13 @@
-// Transaction receipts: each toast is a slip torn off the ledger, stacked bottom-left.
+// Transaction receipts: each toast is a slip torn off the ledger, stacked bottom-right, away from
+// the left-aligned action buttons.
 import type { Toast } from "../providers/TxToastProvider";
 import { ErrorDetails } from "./ErrorDetails";
-import { ReceiptLink } from "./ReceiptLink";
+import { ExplorerButton } from "./ExplorerButton";
 import { Spinner } from "./ui";
 
 const STATUS_TEXT: Record<Toast["status"], string> = {
-  pending: "Sending to the network",
-  confirmed: "Done. It is on the record.",
+  pending: "Sending to Solana devnet",
+  confirmed: "Confirmed on Solana devnet. Anyone can check it on the public record.",
   failed: "Did not go through.",
 };
 
@@ -59,14 +60,22 @@ export function TxToast({
           {toast.status === "pending" && <Spinner className="text-ink-soft" />}
           {STATUS_TEXT[toast.status]}
         </span>
-        {toast.signatures.length > 0 &&
-          !failed &&
-          toast.signatures.map((sig, i) => (
-            <ReceiptLink key={sig} signature={sig}>
-              {toast.signatures.length > 1 ? `Receipt ${i + 1}` : "Receipt"}
-            </ReceiptLink>
-          ))}
       </div>
+      {toast.signatures.length > 0 && !failed && (
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {toast.signatures.map((sig, i) => (
+            <ExplorerButton
+              key={sig}
+              signature={sig}
+              kind={toast.status === "confirmed" ? "act" : "plain"}
+            >
+              {toast.signatures.length > 1
+                ? `Verify transaction ${i + 1}`
+                : "Verify on Solana Explorer"}
+            </ExplorerButton>
+          ))}
+        </div>
+      )}
       {failed && toast.error && (
         <div className="mt-2 border-t border-dashed border-rule pt-2">
           <ErrorDetails error={toast.error} />
@@ -86,7 +95,7 @@ export function TxToastList({
   if (toasts.length === 0) return null;
   return (
     <div
-      className="fixed bottom-4 left-4 z-50 flex flex-col gap-2"
+      className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {toasts.map((t) => (

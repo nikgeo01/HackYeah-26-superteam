@@ -6,6 +6,7 @@ import type { ExplainedError } from "../../lib/errors";
 import type { DealView, Role } from "../../lib/deals";
 import { explorerAddressUrl, explorerTxUrl, shortAddress } from "../../lib/format";
 import { RoleMark } from "../RoleSwitcher";
+import { OutArrow } from "../ExplorerButton";
 
 type Variant = "primary" | "secondary" | "danger" | "dangerSolid" | "ghost";
 
@@ -44,7 +45,7 @@ export const LINK =
 /** A link to a transaction on the Solana Explorer. */
 export function TxLink({
   signature,
-  children = "View receipt",
+  children = "Verify on Solana Explorer",
   className = "",
 }: {
   signature: string;
@@ -56,10 +57,11 @@ export function TxLink({
       href={explorerTxUrl(signature)}
       target="_blank"
       rel="noreferrer"
-      title={signature}
+      title={`Opens Solana Explorer in a new tab: ${signature}`}
       className={`${LINK} ${className}`}
     >
       {children}
+      <OutArrow className="ml-1 inline-block align-[-1px]" />
     </a>
   );
 }

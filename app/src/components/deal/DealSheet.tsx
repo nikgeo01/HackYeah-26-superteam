@@ -6,6 +6,7 @@ import type { PublicKey } from "@solana/web3.js";
 import { cancelRequests, type DealView, type Role } from "../../lib/deals";
 import { Sheet } from "../ui";
 import { YourMove, dealLevelMove, type Finished } from "./ActionBar";
+import { ActivityPanel } from "./ActivityPanel";
 import { CancelBanner } from "./CancelBanner";
 import { DealHeader } from "./DealHeader";
 import { MilestoneRow } from "./MilestoneRow";
@@ -98,6 +99,10 @@ export function DealSheet({
           ))}
         </ol>
       </section>
+
+      <div className="mt-10 border-t border-rule pt-7">
+        <ActivityPanel deal={deal} />
+      </div>
 
       <div className="mt-10 border-t border-rule pt-7">
         <TermsPanel deal={deal} me={me} />

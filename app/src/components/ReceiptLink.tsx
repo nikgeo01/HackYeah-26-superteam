@@ -1,4 +1,5 @@
 import { explorerTxUrl } from "../lib/format";
+import { OutArrow } from "./ExplorerButton";
 
 /** "Receipt" link to the Solana Explorer transaction page (devnet). Opens in a new tab. */
 export function ReceiptLink({
@@ -19,6 +20,7 @@ export function ReceiptLink({
       title={`Opens Solana Explorer in a new tab: ${signature}`}
     >
       {children}
+      <OutArrow className="ml-1 inline-block align-[-1px]" />
     </a>
   );
 }

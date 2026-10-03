@@ -35,7 +35,10 @@ export interface TxToastApi {
 }
 
 const TxToastContext = createContext<TxToastApi | null>(null);
-const AUTO_DISMISS_MS = 15_000;
+/** Long enough to open the receipt on Solana Explorer; the × closes it sooner. */
+const AUTO_DISMISS_MS = 45_000;
+/** Older toasts drop off so the stack never covers the page. */
+const MAX_TOASTS = 4;
 
 export function TxToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -53,7 +56,7 @@ export function TxToastProvider({ children }: { children: ReactNode }) {
   const start = useCallback((label: string) => {
     const id = nextId.current++;
     setToasts((all) => [
-      ...all,
+      ...all.slice(-(MAX_TOASTS - 1)),
       { id, label, status: "pending", signatures: [] },
     ]);
     return id;
