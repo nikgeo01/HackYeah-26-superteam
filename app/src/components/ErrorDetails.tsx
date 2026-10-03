@@ -4,16 +4,18 @@ import { ReceiptLink } from "./ReceiptLink";
 /** Plain message, optional receipt, and the raw text behind a collapsible "Details" (PLAN 4.6). */
 export function ErrorDetails({ error }: { error: ExplainedError }) {
   return (
-    <div className="space-y-1">
-      <p>{error.message}</p>
+    <div className="space-y-1.5">
+      <p className="text-ink">{error.message}</p>
       {error.signature && (
         <ReceiptLink signature={error.signature}>
           View the failed transaction
         </ReceiptLink>
       )}
-      <details className="text-xs text-slate-500">
-        <summary className="cursor-pointer select-none">Details</summary>
-        <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-slate-100 p-2">
+      <details className="group text-micro text-ink-soft">
+        <summary className="w-fit cursor-pointer select-none rounded-[var(--radius-tag)] font-medium hover:text-ink">
+          Details
+        </summary>
+        <pre className="mt-1.5 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-tag)] border border-rule-soft bg-ground/60 p-2 font-sans text-micro leading-snug text-ink">
           {error.code ? `${error.code}\n\n` : ""}
           {error.details}
         </pre>
@@ -22,7 +24,7 @@ export function ErrorDetails({ error }: { error: ExplainedError }) {
   );
 }
 
-/** A full-width error banner. */
+/** A full-width error band: void edge, plain message first. */
 export function ErrorBanner({
   error,
   onClose,
@@ -33,16 +35,16 @@ export function ErrorBanner({
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900"
+      className="flex items-start gap-3 rounded-r-[var(--radius-control)] border-l-4 border-l-void bg-void-wash px-4 py-3 text-sm"
     >
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <ErrorDetails error={error} />
       </div>
       {onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="text-red-700 hover:text-red-900"
+          className="-mr-1 -mt-0.5 rounded-[var(--radius-tag)] px-1.5 text-lead leading-none text-ink-soft hover:text-ink"
           aria-label="Dismiss"
         >
           ×
