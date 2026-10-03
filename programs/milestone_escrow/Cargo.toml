@@ -23,7 +23,17 @@ custom-panic = []
 [dependencies]
 anchor-lang = "1.1.2"
 anchor-spl = "1.1.2"
+solana-keccak-hasher = "3"
+solana-secp256k1-recover = "3"
 
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
+
+# Off-chain (unit tests, IDL build) keccak needs the pure-Rust fallback; on-chain
+# it uses the sol_keccak256 syscall.
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+solana-keccak-hasher = { version = "3", features = ["sha3"] }
+
+[dev-dependencies]
+k256 = { version = "0.13", features = ["ecdsa"] }

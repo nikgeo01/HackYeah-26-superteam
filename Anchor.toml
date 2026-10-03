@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-milestone_escrow = "6PisfLVTpenAEvaZmSSswrf2hZy6F3YZ6zvHqBZDMXna"
+milestone_escrow = "A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer"
 
 [provider]
 cluster = "localnet"
