@@ -125,7 +125,7 @@ export default function How() {
       </Section>
 
       <Section title="Who can do what">
-        <div className="-mx-1 overflow-x-auto px-1">
+        <div className="relative -mx-1 overflow-x-auto px-1">
           <table className="w-full min-w-[30rem] border-y border-rule text-sm">
             <thead>
               <tr className="border-b border-rule text-left">

@@ -180,9 +180,6 @@ export function Agreement({
           </Clause>
         )}
       </ul>
-      <p className="mt-2 border-t border-rule pt-3 text-micro text-ink-soft">
-        Once created, nobody can change these terms, including us.
-      </p>
     </Sheet>
   );
 }
