@@ -53,10 +53,15 @@ export function numArg(
 
 /** Runs `main`, printing a one-line error (no stack) and exiting 1 on failure. */
 export function run(main: () => Promise<void>): void {
-  main().catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`error: ${message}`);
-    if (process.env.DEBUG && error instanceof Error) console.error(error.stack);
-    process.exit(1);
-  });
+  main()
+    // zkFetch keeps a connection to the attestor open, which would keep the
+    // process alive after the work is done; exit explicitly instead.
+    .then(() => process.exit(0))
+    .catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`error: ${message}`);
+      if (process.env.DEBUG && error instanceof Error)
+        console.error(error.stack);
+      process.exit(1);
+    });
 }
