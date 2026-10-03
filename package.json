@@ -10,6 +10,8 @@
     "@anchor-lang/core": "^1.1.2"
   },
   "devDependencies": {
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "1.8.0",
     "@solana/spl-token": "^0.4.15",
     "@types/bn.js": "^5.2.0",
     "@types/chai": "^5.2.3",
