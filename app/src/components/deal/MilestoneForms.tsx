@@ -12,7 +12,7 @@ import {
   submitWorkIx,
 } from "../../lib/instructions";
 import { ErrorBanner } from "../ErrorDetails";
-import { Btn, localError, Spinner } from "./common";
+import { Btn, INPUT, localError, Spinner } from "./common";
 
 /** Bytes of the deliverable link the program accepts (MAX_URI_LEN). */
 const MAX_URI_BYTES = 128;
@@ -61,15 +61,15 @@ export function DeliverWorkForm({
   return (
     <form
       onSubmit={submit}
-      className="space-y-2 rounded-xl border-2 border-emerald-200 bg-emerald-50/50 p-4"
+      className="w-full max-w-2xl space-y-2"
     >
       <label
         htmlFor={`uri-${milestone.index}`}
-        className="block text-sm font-semibold text-slate-900"
+        className="block text-sm font-semibold text-ink"
       >
-        Deliver work
+        Link to your work
       </label>
-      <p className="text-xs text-slate-600">
+      <p className="text-micro text-ink-soft">
         Paste a link to what you delivered (a pull request, a release, a
         document). The app stores its fingerprint (SHA-256) on Solana, and the
         client's review time starts.
@@ -82,9 +82,9 @@ export function DeliverWorkForm({
           placeholder="https://github.com/owner/repo/pull/12"
           value={uri}
           onChange={(e) => setUri(e.target.value)}
-          className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+          className={`min-w-0 flex-1 basis-56 ${INPUT}`}
         />
-        <Btn type="submit" variant="success" disabled={busy}>
+        <Btn type="submit" disabled={busy}>
           {busy && <Spinner />}Deliver work
         </Btn>
       </div>
@@ -150,7 +150,7 @@ export function LinkPullRequestForm({
 
   if (!open)
     return (
-      <Btn variant="secondary" onClick={() => setOpen(true)}>
+      <Btn variant="ghost" className="-ml-3.5" onClick={() => setOpen(true)} data-preview-ok>
         Link a pull request
       </Btn>
     );
@@ -204,15 +204,15 @@ export function LinkPullRequestForm({
   return (
     <form
       onSubmit={(e) => void submit(e)}
-      className="space-y-2 rounded-xl border border-violet-200 bg-violet-50/50 p-4"
+      className="w-full max-w-2xl space-y-2 rounded-[var(--radius-control)] border border-rule p-4"
     >
       <label
         htmlFor={`pr-${milestone.index}`}
-        className="block text-sm font-semibold text-slate-900"
+        className="block text-sm font-semibold text-ink"
       >
         Link a pull request in {deal.proofRepo}
       </label>
-      <p className="text-xs text-slate-600">
+      <p className="text-micro text-ink-soft">
         Merging this pull request will be your acceptance: it releases this
         payment. This can be set once and never changed. Only use a repository
         where you decide what gets merged.
@@ -224,9 +224,9 @@ export function LinkPullRequestForm({
           placeholder="12"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-28 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+          className={`w-28 ${INPUT}`}
         />
-        <Btn type="submit" variant="proof" disabled={busy || checking}>
+        <Btn type="submit" variant="secondary" disabled={busy || checking}>
           {(busy || checking) && <Spinner />}
           {checking ? "Checking GitHub…" : "Check and link"}
         </Btn>
@@ -234,6 +234,7 @@ export function LinkPullRequestForm({
           variant="ghost"
           onClick={() => setOpen(false)}
           disabled={busy || checking}
+          data-preview-ok
         >
           Cancel
         </Btn>

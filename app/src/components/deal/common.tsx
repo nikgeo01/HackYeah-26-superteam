@@ -4,70 +4,69 @@ import type { PublicKey } from "@solana/web3.js";
 import { hasMajority } from "@client/rules";
 import type { ExplainedError } from "../../lib/errors";
 import type { DealView, Role } from "../../lib/deals";
-import { explorerAddressUrl, shortAddress } from "../../lib/format";
+import { explorerAddressUrl, explorerTxUrl, shortAddress } from "../../lib/format";
 import { RoleMark } from "../RoleSwitcher";
 
-type Variant =
-  | "primary"
-  | "secondary"
-  | "danger"
-  | "dangerSolid"
-  | "success"
-  | "proof"
-  | "ghost";
+type Variant = "primary" | "secondary" | "danger" | "dangerSolid" | "ghost";
 
-// Mapped onto the design system (app/DESIGN.md): one violet action, ink outlines, red only to confirm loss.
+// Mapped onto the design system (app/DESIGN.md): one violet action, ink outlines, red only to
+// confirm a loss. "danger" is an outlined choice that can cost money (it is not decoration).
 const VARIANT: Record<Variant, string> = {
   primary: "bg-stamp text-sheet border border-stamp hover:bg-stamp-deep",
   secondary: "bg-sheet text-ink border border-ink/70 hover:bg-ground",
-  danger: "bg-sheet text-void border border-void/70 hover:bg-void-wash",
+  danger: "bg-sheet text-ink border border-ink/70 hover:border-void hover:text-void",
   dangerSolid: "bg-void text-sheet border border-void hover:brightness-110",
-  success: "bg-stamp text-sheet border border-stamp hover:bg-stamp-deep",
-  proof: "bg-ink text-sheet border border-ink hover:bg-stamp",
   ghost: "text-ink-soft border border-transparent hover:text-ink hover:bg-ground",
 };
 
 /** Standard action button. */
 export function Btn({
   variant = "primary",
+  size = "md",
   className = "",
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: "md" | "lg" }) {
   return (
     <button
       type="button"
       {...rest}
-      className={`inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] px-3.5 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${VARIANT[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${size === "lg" ? "px-5 py-3 text-lead" : "px-3.5 py-2 text-sm"} ${VARIANT[variant]} ${className}`}
     />
   );
 }
 
 export { Spinner } from "../ui";
 
-/** A note band (neutral, info, warning, success). */
-export function Note({
-  tone = "neutral",
-  children,
+/** The underline used for every link on the deal page. */
+export const LINK =
+  "font-medium text-ink underline decoration-rule decoration-2 underline-offset-[3px] hover:decoration-stamp";
+
+/** A link to a transaction on the Solana Explorer. */
+export function TxLink({
+  signature,
+  children = "View receipt",
   className = "",
 }: {
-  tone?: "neutral" | "info" | "warning" | "success";
-  children: ReactNode;
+  signature: string;
+  children?: ReactNode;
   className?: string;
 }) {
-  const tones = {
-    neutral: "border-l-rule bg-ground/50 text-ink",
-    info: "border-l-ink/40 bg-ground/60 text-ink",
-    warning: "border-l-clock bg-clock-wash text-ink",
-    success: "border-l-stamp bg-stamp-wash text-ink",
-  } as const;
   return (
-    <div
-      className={`rounded-r-[var(--radius-control)] border-l-4 px-3 py-2 text-sm ${tones[tone]} ${className}`}
+    <a
+      href={explorerTxUrl(signature)}
+      target="_blank"
+      rel="noreferrer"
+      title={signature}
+      className={`${LINK} ${className}`}
     >
       {children}
-    </div>
+    </a>
   );
 }
+
+/** Text input on the sheet. */
+export const INPUT =
+  "rounded-[var(--radius-control)] border border-ink/40 bg-sheet px-3 py-2 text-sm text-ink placeholder:text-ink-soft/70 focus-visible:border-stamp";
 
 /** A local (non-transaction) failure in the same shape the app uses everywhere. */
 export function localError(message: string, details = ""): ExplainedError {
@@ -80,13 +79,6 @@ export const ROLE_LABEL: Record<Role, string> = {
   worker: "Freelancer",
   arbiter: "Arbiter",
   stranger: "Passer-by",
-};
-
-export const ROLE_BADGE: Record<Role, string> = {
-  client: "border-ink/60 text-ink",
-  worker: "border-ink/60 text-ink",
-  arbiter: "border-ink/60 text-ink",
-  stranger: "border-ink/60 text-ink",
 };
 
 /** A role named in words with its shape mark (roles differ by shape, not hue). */
@@ -126,7 +118,7 @@ export function AddressLink({
       target="_blank"
       rel="noreferrer"
       title={text}
-      className="figures text-ink underline decoration-rule decoration-2 underline-offset-[3px] hover:decoration-stamp"
+      className={`figures whitespace-nowrap ${LINK}`}
     >
       {shortAddress(text, chars)}
     </a>
@@ -143,7 +135,7 @@ export function PullLink({ repo, n }: { repo: string; n: number }) {
       href={pullUrl(repo, n)}
       target="_blank"
       rel="noreferrer"
-      className="font-semibold text-ink underline decoration-rule decoration-2 underline-offset-[3px] hover:decoration-stamp"
+      className={LINK}
     >
       PR #{n}
     </a>
