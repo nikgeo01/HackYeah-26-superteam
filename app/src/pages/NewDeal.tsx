@@ -181,7 +181,7 @@ export default function NewDeal() {
         </ol>
       </nav>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)] lg:gap-8">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)] lg:grid-rows-[auto_1fr] lg:gap-x-8">
         <Sheet className="order-1 px-5 py-6 sm:px-7 lg:col-start-1 lg:row-start-1">
           {step === 0 && (
             <StepPeople draft={draft} update={update} err={errFor(0)} client={client} />
@@ -208,7 +208,7 @@ export default function NewDeal() {
           <Agreement draft={draft} client={client} />
         </div>
 
-        <div className={`space-y-4 lg:col-start-1 lg:row-start-2 ${onReview ? "order-3" : "order-2"}`}>
+        <div className={`space-y-4 self-start lg:col-start-1 lg:row-start-2 ${onReview ? "order-3" : "order-2"}`}>
           {submitError && <Notice tone="void">{submitError}</Notice>}
           <div className="flex flex-wrap-reverse items-center justify-between gap-3">
             {step > 0 ? (

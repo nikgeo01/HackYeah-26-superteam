@@ -2,17 +2,37 @@
 // The terms themselves are read in "The agreement so far".
 import type { PublicKey } from "@solana/web3.js";
 import { useBalances } from "../../hooks/useBalances";
-import { FaucetButton } from "../FaucetButton";
-import { Amount, Ledger, Notice, splitAmount } from "../ui";
+import { useActor } from "../../providers/ActorProvider";
+import { useTx } from "../../hooks/useTx";
+import { faucetTxSpec, faucetUnavailableReason, FAUCET_AMOUNT } from "../../lib/faucet";
+import { Button, Ledger, Notice, Spinner } from "../ui";
+import { InlineAmount } from "../ui/InlineAmount";
 import { formatAmount } from "../../lib/format";
 import type { PrCheck } from "./github";
 import { Part } from "./fields";
 import type { DealInputDraft } from "./model";
 
-const money = (raw: bigint) => {
-  const { value, symbol } = splitAmount(formatAmount(raw));
-  return <Amount value={value} symbol={symbol} size="sm" />;
-};
+const money = (raw: bigint) => <InlineAmount raw={raw} />;
+
+/** Mints test dollars to the active actor (same transaction as the header faucet). */
+function GetTestDollars() {
+  const { actor } = useActor();
+  const { send, busy } = useTx();
+  const unavailable = faucetUnavailableReason();
+  return (
+    <span className="inline-flex flex-col items-start gap-1">
+      <Button
+        kind="plain"
+        disabled={busy || !actor || unavailable !== null}
+        onClick={() => actor && void send("Get test dollars", faucetTxSpec(actor.publicKey))}
+      >
+        {busy && <Spinner />}
+        {busy ? "Getting test dollars" : `Get ${formatAmount(FAUCET_AMOUNT)}`}
+      </Button>
+      {unavailable && <span className="text-micro text-ink-soft">{unavailable}</span>}
+    </span>
+  );
+}
 
 export function StepReview({
   input,
@@ -57,7 +77,7 @@ export function StepReview({
               You are {formatAmount(total - balances.tusdc)} short. Get test dollars, then lock the
               payment.
             </span>
-            <FaucetButton />
+            <GetTestDollars />
           </Notice>
         )}
         <p className="max-w-[62ch] text-sm text-ink-soft">

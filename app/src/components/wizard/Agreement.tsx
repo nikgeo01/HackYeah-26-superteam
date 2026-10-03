@@ -6,6 +6,7 @@ import type { PublicKey } from "@solana/web3.js";
 import { useActor } from "../../providers/ActorProvider";
 import { RoleMark, type RoleShape } from "../RoleSwitcher";
 import { Amount, Sheet, splitAmount } from "../ui";
+import { InlineAmount } from "../ui/InlineAmount";
 import { formatAmount, formatDuration, parseAmount, shortAddress } from "../../lib/format";
 import { toPublicKey } from "../../lib/pdas";
 import { durationSecs, type DealDraft, type DurationDraft } from "./model";
@@ -19,10 +20,7 @@ function Blank({ children = "not set yet" }: { children?: ReactNode }) {
   );
 }
 
-function Money({ raw }: { raw: bigint }) {
-  const { value, symbol } = splitAmount(formatAmount(raw));
-  return <Amount value={value} symbol={symbol} size="sm" />;
-}
+const Money = InlineAmount;
 
 function Time({ d }: { d: DurationDraft }) {
   const secs = durationSecs(d);

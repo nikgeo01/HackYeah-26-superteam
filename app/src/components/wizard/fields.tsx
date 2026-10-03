@@ -83,7 +83,7 @@ export function DurationInput({
           aria-invalid={invalid || undefined}
           aria-describedby={`${id}-note`}
           onChange={(e) => onChange({ ...value, value: e.target.value })}
-          className={cx(inputClass(invalid), "w-20 rounded-r-none")}
+          className={cx(inputClass(invalid), "w-20! rounded-r-none")}
         />
         <select
           aria-label="Unit"
