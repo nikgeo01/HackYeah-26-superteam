@@ -39,7 +39,6 @@ export function TxToast({
     >
       <span aria-hidden className="absolute inset-x-[-1px] -top-[9px] h-[10px]" style={TORN_RULE} />
       <span aria-hidden className="absolute inset-x-0 -top-[8px] h-[10px]" style={TORN_SHEET} />
-      {failed && <span aria-hidden className="absolute inset-y-0 left-[-1px] w-[3px] bg-void" />}
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold leading-snug text-ink">{toast.label}</p>
         <button

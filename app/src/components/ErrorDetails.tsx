@@ -24,7 +24,7 @@ export function ErrorDetails({ error }: { error: ExplainedError }) {
   );
 }
 
-/** A full-width error band: void edge, plain message first. */
+/** A full-width error box: red tint, plain message first. */
 export function ErrorBanner({
   error,
   onClose,
@@ -35,7 +35,7 @@ export function ErrorBanner({
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-r-[var(--radius-control)] border-l-4 border-l-void bg-void-wash px-4 py-3 text-sm"
+      className="flex items-start gap-3 rounded-[var(--radius-control)] border border-void/35 bg-void-wash px-4 py-3 text-sm"
     >
       <div className="min-w-0 flex-1">
         <ErrorDetails error={error} />

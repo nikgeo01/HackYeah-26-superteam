@@ -245,7 +245,8 @@ export function Heading({
 export type NoticeTone = "info" | "move" | "clock" | "void";
 
 /**
- * A notice band. "move" is reserved for "this is your move" (stamp violet edge);
+ * A notice box: a soft tint with a thin matching outline. "move" is reserved for "this is your
+ * move" (stamp violet);
  * "clock" for time running out; "void" for errors.
  */
 export function Notice({
@@ -258,15 +259,15 @@ export function Notice({
   className?: string;
 }) {
   const tones = {
-    info: "border-l-ink/40 bg-ground/60 text-ink",
-    move: "border-l-stamp bg-stamp-wash text-ink",
-    clock: "border-l-clock bg-clock-wash text-ink",
-    void: "border-l-void bg-void-wash text-ink",
+    info: "border-rule bg-ground/60 text-ink",
+    move: "border-stamp/25 bg-stamp-wash text-ink",
+    clock: "border-clock/30 bg-clock-wash text-ink",
+    void: "border-void/35 bg-void-wash text-ink",
   } as const;
   return (
     <div
       className={cx(
-        "rounded-r-[var(--radius-control)] border-l-4 px-4 py-3 text-sm",
+        "rounded-[var(--radius-control)] border px-4 py-3 text-sm",
         tones[tone],
         className,
       )}
