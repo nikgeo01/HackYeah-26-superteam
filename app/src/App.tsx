@@ -12,6 +12,7 @@ import NewDeal from "./pages/NewDeal";
 import DealDetail from "./pages/DealDetail";
 import How from "./pages/How";
 import Demo from "./pages/Demo";
+import StatesPreview from "./pages/StatesPreview";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ export default function App() {
                     <Route path="deal/:address" element={<DealDetail />} />
                     <Route path="how" element={<How />} />
                     {DEMO_MODE && <Route path="demo" element={<Demo />} />}
+                    {import.meta.env.DEV && <Route path="_states" element={<StatesPreview/>} />}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
                 </Routes>
