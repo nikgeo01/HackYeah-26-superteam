@@ -1,18 +1,23 @@
+// Transaction receipts: each toast is a slip torn off the ledger, stacked bottom-left.
 import type { Toast } from "../providers/TxToastProvider";
 import { ErrorDetails } from "./ErrorDetails";
 import { ReceiptLink } from "./ReceiptLink";
-
-const STYLE: Record<Toast["status"], string> = {
-  pending: "border-slate-200 bg-white",
-  confirmed: "border-emerald-300 bg-emerald-50",
-  failed: "border-red-300 bg-red-50",
-};
+import { Spinner } from "./ui";
 
 const STATUS_TEXT: Record<Toast["status"], string> = {
-  pending: "Waiting for the network…",
-  confirmed: "Done.",
+  pending: "Sending to the network",
+  confirmed: "Done. It is on the record.",
   failed: "Did not go through.",
 };
+
+/** The torn top edge of a slip: a row of small teeth in sheet colour. */
+const TORN_EDGE = {
+  backgroundImage:
+    "linear-gradient(135deg, var(--color-sheet) 4px, transparent 0), linear-gradient(225deg, var(--color-sheet) 4px, transparent 0)",
+  backgroundSize: "8px 8px",
+  backgroundPosition: "left bottom",
+  backgroundRepeat: "repeat-x",
+} as const;
 
 /** One transaction toast: pending, confirmed or failed, with receipt links. */
 export function TxToast({
@@ -22,41 +27,46 @@ export function TxToast({
   toast: Toast;
   onDismiss: () => void;
 }) {
+  const failed = toast.status === "failed";
   return (
     <div
-      role="status"
-      className={`w-80 rounded-lg border p-3 text-sm shadow-lg ${STYLE[toast.status]}`}
+      role={failed ? "alert" : "status"}
+      className={`relative mt-[7px] w-80 max-w-[calc(100vw-2rem)] rounded-b-[var(--radius-control)] border-x border-b bg-sheet px-4 pb-3 pt-2.5 text-sm ${
+        failed ? "border-void/70" : "border-rule"
+      }`}
     >
+      <span aria-hidden className="absolute inset-x-[-1px] -top-[7px] h-2" style={TORN_EDGE} />
+      {failed && <span aria-hidden className="absolute inset-y-0 left-[-1px] w-[3px] bg-void" />}
       <div className="flex items-start justify-between gap-2">
-        <div className="font-semibold">{toast.label}</div>
+        <p className="font-semibold leading-snug text-ink">{toast.label}</p>
         <button
           type="button"
           onClick={onDismiss}
-          className="text-slate-400 hover:text-slate-700"
+          className="-mr-1.5 -mt-0.5 rounded-[var(--radius-tag)] px-1.5 text-lead leading-none text-ink-soft hover:text-ink"
           aria-label="Dismiss"
         >
           ×
         </button>
       </div>
-      <div className="mt-1 flex items-center gap-2 text-slate-700">
-        {toast.status === "pending" && (
-          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
-        )}
-        <span>{STATUS_TEXT[toast.status]}</span>
-      </div>
-      {toast.signatures.length > 0 && toast.status !== "failed" && (
-        <div className="mt-1 flex flex-wrap gap-x-3">
-          {toast.signatures.map((sig, i) => (
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span
+          className={`inline-flex items-center gap-2 ${
+            failed ? "font-medium text-void" : "text-ink-soft"
+          }`}
+        >
+          {toast.status === "pending" && <Spinner className="text-ink-soft" />}
+          {STATUS_TEXT[toast.status]}
+        </span>
+        {toast.signatures.length > 0 &&
+          !failed &&
+          toast.signatures.map((sig, i) => (
             <ReceiptLink key={sig} signature={sig}>
-              {toast.signatures.length > 1
-                ? `Receipt ${i + 1}`
-                : "View receipt"}
+              {toast.signatures.length > 1 ? `Receipt ${i + 1}` : "Receipt"}
             </ReceiptLink>
           ))}
-        </div>
-      )}
-      {toast.status === "failed" && toast.error && (
-        <div className="mt-2 text-red-900">
+      </div>
+      {failed && toast.error && (
+        <div className="mt-2 border-t border-dashed border-rule pt-2">
           <ErrorDetails error={toast.error} />
         </div>
       )}
@@ -73,7 +83,10 @@ export function TxToastList({
 }) {
   if (toasts.length === 0) return null;
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div
+      className="fixed bottom-4 left-4 z-50 flex flex-col gap-2"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
       {toasts.map((t) => (
         <TxToast key={t.id} toast={t} onDismiss={() => onDismiss(t.id)} />
       ))}
