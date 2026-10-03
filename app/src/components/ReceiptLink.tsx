@@ -1,6 +1,6 @@
 import { explorerTxUrl } from "../lib/format";
 
-/** "Receipt" link to the Solana Explorer transaction page (devnet). */
+/** "Receipt" link to the Solana Explorer transaction page (devnet). Opens in a new tab. */
 export function ReceiptLink({
   signature,
   children = "View receipt",
@@ -15,8 +15,8 @@ export function ReceiptLink({
       href={explorerTxUrl(signature)}
       target="_blank"
       rel="noreferrer"
-      className={`font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 ${className}`}
-      title={signature}
+      className={`font-medium text-ink underline decoration-ink/40 decoration-1 underline-offset-[3px] hover:text-stamp hover:decoration-stamp ${className}`}
+      title={`Opens Solana Explorer in a new tab: ${signature}`}
     >
       {children}
     </a>
