@@ -8,14 +8,12 @@ import type { DealView, MilestoneInfo, Role } from "../../lib/deals";
 import { COPY } from "../../lib/errors";
 import { settleMilestoneIx } from "../../lib/instructions";
 import { crankReady } from "../../lib/outcomes";
+import { formatAmount, formatCountdown, shortAddress } from "../../lib/format";
+import { Amount, splitAmount } from "../ui";
 import {
-  explorerTxUrl,
-  formatAmount,
-  formatCountdown,
-  shortAddress,
-} from "../../lib/format";
-import {
+  Btn,
   Spinner,
+  TxLink,
   signerPhrase,
   type MilestoneReceipt,
   type RecordReceipt,
@@ -51,47 +49,36 @@ export function ReleaseMoment({
   const left = milestone.reviewDeadline - now;
   const ready = crankReady(deal, milestone.index, now);
 
-  if (left > 0) {
-    const pct = Math.min(
-      100,
-      Math.max(0, (1 - left / Math.max(1, deal.reviewWindowSecs)) * 100),
-    );
+  // The review clock: large, live, amber in the last ten seconds.
+  if (left > 0 || !ready) {
     const urgent = left <= 10;
     return (
-      <div
-        className={`overflow-hidden rounded-2xl border-2 p-5 text-center transition-colors duration-700 ${urgent ? "border-amber-400 bg-amber-50" : "border-indigo-200 bg-gradient-to-b from-indigo-50 to-white"}`}
-      >
-        <p className="text-sm font-medium text-slate-600">
-          {countdownLabel(role)}
+      <div className="space-y-1">
+        <p className="text-sm text-ink">
+          {left > 0 ? (
+            countdownLabel(role)
+          ) : (
+            <span className="flex items-center gap-2">
+              <Spinner /> The review time is over. Waiting a few seconds for the network clock to
+              agree…
+            </span>
+          )}
         </p>
-        <p
-          className={`mt-1 font-mono text-6xl font-black tabular-nums tracking-tight sm:text-7xl ${urgent ? "text-amber-600" : "text-indigo-700"}`}
-          aria-live="off"
-        >
-          {formatCountdown(left)}
-        </p>
-        <div className="mx-auto mt-4 h-2 max-w-md overflow-hidden rounded-full bg-slate-200">
-          <div
-            className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${urgent ? "bg-amber-500" : "bg-indigo-500"}`}
-            style={{ width: `${pct}%` }}
-          />
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
+          <p
+            role="timer"
+            aria-live="off"
+            className={`tnum text-display font-[650] leading-none tracking-[-0.03em] transition-colors duration-700 ${urgent ? "text-clock" : "text-ink"}`}
+          >
+            {formatCountdown(left)}
+          </p>
+          {left > 0 && (
+            <p className="max-w-[36ch] pb-1 text-micro text-ink-soft">
+              Counted on Solana's clock, the same clock the program uses. Silence pays the
+              freelancer.
+            </p>
+          )}
         </div>
-        <p className="mt-3 text-xs text-slate-500">
-          Counted on Solana's clock, the same clock the program uses. Silence
-          pays the freelancer.
-        </p>
-      </div>
-    );
-  }
-
-  if (!ready) {
-    return (
-      <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 text-center">
-        <p className="font-mono text-5xl font-black text-amber-600">00:00</p>
-        <p className="mt-2 flex items-center justify-center gap-2 text-sm text-amber-900">
-          <Spinner /> The review time is over. Waiting a few seconds for the
-          network clock to agree…
-        </p>
       </div>
     );
   }
@@ -117,61 +104,50 @@ export function ReleaseMoment({
         });
     });
 
+  const amount = splitAmount(formatAmount(milestone.amount));
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white shadow-xl ring-4 ring-emerald-300/70">
-      <span className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 animate-ping rounded-full bg-white/10" />
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-50/90">
-        Nobody needs to approve
-      </p>
-      <h3 className="mt-1 text-2xl font-extrabold leading-tight sm:text-3xl">
-        The review time is over. Anyone can release this payment.
-      </h3>
-      <p className="mt-2 text-sm text-emerald-50">
-        {formatAmount(milestone.amount)} goes from the deal's vault straight to
-        the freelancer. The rule is in the program; whoever presses the button
-        only pays the network fee.
-      </p>
-      <button
-        type="button"
-        onClick={release}
-        disabled={busy}
-        className="mt-5 inline-flex items-center gap-3 rounded-xl bg-white px-7 py-4 text-lg font-extrabold text-emerald-700 shadow-lg transition hover:scale-[1.02] hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-70"
+    <div className="grid gap-x-8 gap-y-4 rounded-[var(--radius-sheet)] border-2 border-stamp bg-stamp-wash p-5 sm:grid-cols-[auto_1fr] sm:p-6">
+      <p
+        className="tnum text-display font-[650] leading-none tracking-[-0.03em] text-stamp"
+        aria-hidden
       >
-        {busy && <Spinner />}
-        {busy ? "Releasing…" : label}
-      </button>
+        00:00
+      </p>
+      <div className="space-y-3">
+        <h4 className="text-title font-semibold leading-snug tracking-[-0.01em] text-ink">
+          The review time is over. Anyone can release this payment.
+        </h4>
+        <p className="max-w-[60ch] text-sm text-ink-soft">
+          <Amount value={amount.value} symbol={amount.symbol} size="sm" className="text-ink" /> goes
+          from the deal's vault straight to the freelancer. The rule is in the program; whoever
+          presses the button only pays the network fee.
+        </p>
+        <Btn size="lg" onClick={release} disabled={busy} aria-busy={busy}>
+          {busy && <Spinner />}
+          {busy ? "Releasing…" : label}
+        </Btn>
+      </div>
     </div>
   );
 }
 
-/** The banner after a timer-released payment: who signed, and the receipt. */
-export function PaidByRuleBanner({ receipt }: { receipt: MilestoneReceipt }) {
-  const phrase = signerPhrase(receipt.signerRole);
+/** The line next to the stamp after a timer-released payment: who signed, and the receipt. */
+export function PaidByRule({ receipt }: { receipt: MilestoneReceipt }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-6 text-white shadow-xl">
-      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-400 to-cyan-400" />
-      <p className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-        Paid by rule.{" "}
-        <span className="text-emerald-300">No one approved this.</span>
+    <div className="space-y-1">
+      <p className="text-lead font-semibold leading-snug text-ink">
+        Paid by rule. No one approved this.
       </p>
-      <p className="mt-2 text-base text-slate-200">
-        Transaction signed by {phrase}:{" "}
-        <span
-          className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-emerald-200"
-          title={receipt.signer.toBase58()}
-        >
+      <p className="text-sm text-ink-soft">
+        Transaction signed by {signerPhrase(receipt.signerRole)}:{" "}
+        <span className="figures font-medium text-ink" title={receipt.signer.toBase58()}>
           {shortAddress(receipt.signer)}
         </span>
+        .{" "}
+        <TxLink signature={receipt.signature}>
+          View the receipt: the transfer from the vault to the freelancer
+        </TxLink>
       </p>
-      <a
-        href={explorerTxUrl(receipt.signature)}
-        target="_blank"
-        rel="noreferrer"
-        title={receipt.signature}
-        className="mt-4 inline-block font-semibold text-emerald-300 underline underline-offset-4 hover:text-emerald-100"
-      >
-        View the receipt: the transfer from the vault to the freelancer
-      </a>
     </div>
   );
 }

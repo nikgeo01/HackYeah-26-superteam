@@ -1,11 +1,8 @@
-// The three arbiter slots and how each voted. Display only.
-import {
-  VOTE_CLIENT,
-  VOTE_WORKER,
-  clientVotes,
-  workerVotes,
-} from "@client/rules";
+// The three arbiter slots and how each voted. Display only. A vote is shown by the shape of the
+// side it went to (round freelancer, square client), never by colour alone.
+import { VOTE_CLIENT, VOTE_WORKER, clientVotes, workerVotes } from "@client/rules";
 import type { DealView, MilestoneInfo } from "../../lib/deals";
+import { RoleMark } from "../RoleSwitcher";
 import { AddressLink, ARBITER_SHORT } from "./common";
 
 export function VoteTally({
@@ -20,42 +17,45 @@ export function VoteTally({
 }) {
   const w = workerVotes(milestone);
   const c = clientVotes(milestone);
+  const word = (k: number) => (k === 1 ? "vote" : "votes");
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="font-semibold text-slate-800">Arbiter votes</span>
-        <span className="text-slate-600">
-          <span className="font-semibold text-emerald-700">{w}</span> for the
-          freelancer · <span className="font-semibold text-sky-700">{c}</span>{" "}
-          for the client · 2 decide
-        </span>
-      </div>
-      <ul className="grid gap-2 sm:grid-cols-3">
+    <div className="space-y-2">
+      <p className="text-sm text-ink-soft">
+        <span className="font-semibold text-ink">Arbiter votes:</span> {w} {word(w)} for the
+        freelancer, {c} for the client. Two decide.
+      </p>
+      <ul className="grid grid-cols-3 gap-2">
         {deal.judges.map((judge, slot) => {
           const vote = milestone.votes[slot];
-          const style =
-            vote === VOTE_WORKER
-              ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-              : vote === VOTE_CLIENT
-                ? "border-sky-300 bg-sky-50 text-sky-900"
-                : "border-dashed border-slate-300 bg-slate-50 text-slate-500";
-          const text =
-            vote === VOTE_WORKER
-              ? "Sided with the freelancer"
-              : vote === VOTE_CLIENT
-                ? "Sided with the client"
-                : "Has not voted";
+          const mine = slot === mySlot;
           return (
             <li
               key={judge.toBase58()}
-              className={`rounded-md border px-2.5 py-2 text-xs ${style} ${slot === mySlot ? "ring-2 ring-amber-400" : ""}`}
+              className={`min-w-0 rounded-[var(--radius-control)] border px-2.5 py-2 text-micro ${
+                mine ? "border-2 border-ink" : vote ? "border-ink/40" : "border-dashed border-rule"
+              }`}
             >
-              <div className="font-semibold">
+              <div className="truncate text-ink-soft">
                 {ARBITER_SHORT[slot]}
-                {slot === mySlot && " (you)"}
+                {mine && <span className="font-semibold text-ink"> (you)</span>}
               </div>
-              <div className="mt-0.5">{text}</div>
-              <div className="mt-1">
+              <div className="mt-1 flex items-center gap-1.5 font-semibold text-ink">
+                {vote === VOTE_WORKER ? (
+                  <>
+                    <RoleMark shape="worker" /> Freelancer
+                  </>
+                ) : vote === VOTE_CLIENT ? (
+                  <>
+                    <RoleMark shape="client" /> Client
+                  </>
+                ) : (
+                  <>
+                    <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full border border-dashed border-ink-soft" />
+                    <span className="font-normal text-ink-soft">Not yet</span>
+                  </>
+                )}
+              </div>
+              <div className="mt-1 truncate">
                 <AddressLink address={judge} />
               </div>
             </li>

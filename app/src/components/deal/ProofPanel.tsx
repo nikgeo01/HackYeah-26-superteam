@@ -20,14 +20,13 @@ import {
 } from "../../lib/instructions";
 import { formatDateTime, shortAddress } from "../../lib/format";
 import { ErrorBanner } from "../ErrorDetails";
-import { ReceiptLink } from "../ReceiptLink";
 import {
   Btn,
   localError,
-  Note,
   proofPathOpen,
   PullLink,
   Spinner,
+  TxLink,
   type RecordReceipt,
 } from "./common";
 
@@ -105,42 +104,50 @@ function StepRow({
   step: Step;
   elapsed: number;
 }) {
-  const icon = {
-    idle: <span className="h-5 w-5 rounded-full border-2 border-slate-300" />,
-    running: <Spinner className="h-5 w-5 text-indigo-600" />,
+  // A real sequence, so the steps are numbered. The mark shows the state by shape.
+  const mark = {
+    idle: (
+      <span className="figures flex h-6 w-6 items-center justify-center rounded-full border border-rule text-micro text-ink-soft">
+        {n + 1}
+      </span>
+    ),
+    running: (
+      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-ink">
+        <Spinner className="h-3 w-3 text-ink" />
+      </span>
+    ),
     done: (
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-micro font-bold text-sheet">
         ✓
       </span>
     ),
     failed: (
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-void text-micro font-bold text-sheet">
         !
       </span>
     ),
   }[step.status];
   return (
-    <li className="flex items-start gap-3 py-2">
-      <span className="mt-0.5 flex w-5 shrink-0 justify-center">{icon}</span>
-      <div className="flex-1 text-sm">
-        <div
-          className={`font-medium ${step.status === "idle" ? "text-slate-500" : "text-slate-900"}`}
-        >
-          {n + 1}. {STEP_TITLES[n]}
+    <li className="flex items-start gap-3 py-2.5">
+      <span className="shrink-0">{mark}</span>
+      <div className="min-w-0 flex-1 pt-0.5 text-sm">
+        <div className={step.status === "idle" ? "text-ink-soft" : "font-medium text-ink"}>
+          <span className="sr-only">Step {n + 1}: </span>
+          {STEP_TITLES[n]}
+          {step.status === "failed" && <span className="font-semibold text-void"> Failed.</span>}
         </div>
         {n === 0 &&
           step.status === "running" &&
           elapsed >= STILL_WORKING_SECS && (
-            <div className="text-amber-700">
-              Still working… GitHub and the attestor can take up to a minute (
-              {elapsed}s).
+            <div className="text-clock">
+              Still working… GitHub and the attestor can take up to a minute ({elapsed}s).
             </div>
           )}
-        {step.detail && <div className="text-slate-600">{step.detail}</div>}
+        {step.detail && <div className="text-ink-soft">{step.detail}</div>}
         {step.signature && (
-          <ReceiptLink signature={step.signature} className="text-xs">
+          <TxLink signature={step.signature} className="text-micro">
             Receipt
-          </ReceiptLink>
+          </TxLink>
         )}
       </div>
     </li>
@@ -330,7 +337,7 @@ export function ProofPanel({
 
   const hint =
     undecided && (role === "client" || role === "worker") ? (
-      <Note tone="info">
+      <p className="text-sm text-ink-soft">
         {role === "client" ? (
           <>Merging PR #{n} is your acceptance. It releases this payment.</>
         ) : (
@@ -339,7 +346,7 @@ export function ProofPanel({
             anyone can prove it and you are paid.
           </>
         )}
-      </Note>
+      </p>
     ) : null;
 
   if (!canProve && !started) return hint;
@@ -348,20 +355,19 @@ export function ProofPanel({
   return (
     <div className="space-y-3">
       {hint}
-      <div className="rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4">
+      <div className="rounded-[var(--radius-control)] border border-rule p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h4 className="font-bold text-slate-900">
+          <div className="max-w-[52ch]">
+            <h4 className="font-semibold text-ink">
               Prove with GitHub and get paid
             </h4>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-ink-soft">
               Once <PullLink repo={deal.proofRepo} n={n} /> is merged, anyone
               can release this payment with a proof from GitHub.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Btn
-              variant="proof"
               disabled={running || !canProve}
               onClick={() => void run()}
             >
@@ -391,7 +397,7 @@ export function ProofPanel({
           </div>
         </div>
         {started && (
-          <ol className="mt-3 divide-y divide-violet-100 border-t border-violet-100">
+          <ol className="ledger mt-3 border-t border-rule-soft">
             {steps.map((s, i) => (
               <StepRow key={STEP_TITLES[i]} n={i} step={s} elapsed={elapsed} />
             ))}
@@ -407,7 +413,7 @@ export function ProofPanel({
             <ErrorBanner error={lastError} />
           </div>
         )}
-        <p className="mt-3 text-xs text-slate-500">{FOOTNOTE}</p>
+        <p className="mt-3 text-micro text-ink-soft">{FOOTNOTE}</p>
       </div>
     </div>
   );

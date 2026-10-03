@@ -36,13 +36,13 @@ export function ObjectionDialog({
         e.preventDefault();
         if (!busy) onCancel();
       }}
-      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-xl p-0 shadow-2xl backdrop:bg-slate-900/50"
+      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-[var(--radius-sheet)] border border-rule bg-sheet p-0 text-ink backdrop:bg-ink/45"
     >
-      <div className="space-y-4 p-5">
-        <h2 className="text-lg font-bold text-slate-900">
+      <div className="space-y-4 p-5 sm:p-6">
+        <h2 className="text-lead font-semibold leading-snug">
           Raise an objection to milestone {milestone.index + 1}?
         </h2>
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-slate-700">
+        <ul className="list-disc space-y-1.5 pl-5 text-sm marker:text-rule">
           {deposit > 0n ? (
             <li>
               This locks <strong>{formatAmount(deposit)}</strong> from your
@@ -65,7 +65,7 @@ export function ObjectionDialog({
           </li>
         </ul>
         <div className="flex flex-wrap justify-end gap-2">
-          <Btn variant="secondary" onClick={onCancel} disabled={busy}>
+          <Btn variant="secondary" onClick={onCancel} disabled={busy} data-preview-ok>
             Keep reviewing
           </Btn>
           <Btn variant="dangerSolid" onClick={onConfirm} disabled={busy}>
