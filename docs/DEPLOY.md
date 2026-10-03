@@ -60,3 +60,29 @@ This is irreversible and the program's rent can never be reclaimed afterwards.
 | 2026-10-03 14:47 | `node scripts/devnet-smoke.ts` (create → accept → deliver → approve + settle) | Worker paid 10 test tokens; [settle tx](https://explorer.solana.com/tx/64UTuShujonULJAnSRWeDzYB1FwT6Q62tgs6YuWcXcnZkzffzoAQVNa1yFPd8hZTdbFihewu3usAzQZm6F42iFSK?cluster=devnet) |
 | 2026-10-03 15:00 | `anchor idl init` (IDL published on-chain, so explorers decode instructions) | 0.028 SOL |
 | 2026-10-03 14:55 | `node scripts/e2e-devnet.ts` | 7/7 scenarios passed, 0.0043 SOL |
+| 2026-10-03 16:20 | Upgrade: proof constants from a real Reclaim proof; `anchor idl upgrade` | [tx](https://explorer.solana.com/tx/4phmCxvjoKe2pDhcwbdEtJaQjidFKcFAq2LN4WNsejhS8FQnpB7SC7rtXThu7s3engymsimdw8hWSjqS21b6LBRj?cluster=devnet); 0.002 SOL net |
+| 2026-10-03 16:45 | Real Reclaim proof on devnet (`scripts/prove.ts`, throwaway deal) | [proof verified](https://explorer.solana.com/tx/5siQ1rRCZ1RthjhejUN3Y5McNPQMgTjWa1tGavpsKwXLW92MHi55zk6P6K1ZaEtsGiabhy4XXftqtqSG617Z6AWo?cluster=devnet), [worker paid 100 tUSDC](https://explorer.solana.com/tx/Q2fejtvB5hbh4P5vPmqkfPfnfPDr6VQLq5d2UYcLPR21mVMoKpLsNtxc534RXgRRA7VZruvF7m8SLTqczoGLr8n?cluster=devnet) |
+| 2026-10-03 16:50 | `node scripts/e2e-devnet.ts` on the upgraded program | 7/7 passed, 0.0043 SOL |
+
+## Release gates before `--final` (PLAN P6)
+
+`--final` is irreversible and is run only when Nikola says so.
+
+| Gate | Status |
+|---|---|
+| Local tests green on the deployed commit (19 Rust, 70 integration) | done |
+| `e2e-devnet.ts` green against the deployed binary | done (7/7) |
+| Real attestor proof verified on devnet | done |
+| Demo deals D1–D8 seeded against the deployed binary | done |
+| No open interface change | done |
+| Rollback reserve of at least 2× program rent (about 4.1 SOL) | done (7.067183348 SOL) |
+| Two manual dry runs through the app in a browser | open |
+| Full backup recording of the demo | open |
+| Both developers say "go" | open |
+
+Command, when all gates pass and Nikola says go:
+
+```
+solana program set-upgrade-authority A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer --final -u devnet
+solana program show A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer -u devnet
+```
