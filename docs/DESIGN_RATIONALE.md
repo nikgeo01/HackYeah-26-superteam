@@ -15,6 +15,15 @@ client in another country that she has never met.
 Because the user is a developer, GitHub is a first-class concept: a milestone can be tied to
 a pull request, and merging that pull request can release the payment.
 
+They are technical, but they are not crypto people, and that choice shapes the interface:
+
+- The app speaks in deals, milestones, deadlines and dollars. Amounts are in a dollar test
+  token; there are no lamports, PDAs or raw addresses on the main screens.
+- Addresses and on-chain details sit under "Details" for anyone who wants them, and every
+  transaction links to its public receipt on Solana Explorer.
+- In demo mode nobody needs a wallet: each role is a ready-made devnet account, and every
+  click is still a real transaction.
+
 ## Which financial relationship we redesigned
 
 A client pays a freelancer for work delivered in milestones. Neither side can go first

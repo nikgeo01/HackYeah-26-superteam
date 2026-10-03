@@ -449,12 +449,20 @@ export default function Landing() {
         <h2 id="who" className="text-title font-semibold leading-snug tracking-[-0.01em]">
           For freelancers and the clients they have never met
         </h2>
-        <p className="max-w-[62ch] text-ink">
-          Kasia is a freelance developer in Kraków. Her new client is a startup in another country.
-          If she delivers first, they could keep the code and not pay. If they pay first, she could
-          disappear. Neither can realistically take the other to court. Kept is for that deal: a
-          freelance developer and a small company, paying in dollars, milestone by milestone.
-        </p>
+        <div className="flex max-w-[62ch] flex-col gap-3">
+          <p className="text-ink">
+            Kasia is a freelance developer in Kraków. Her new client is a startup in another country.
+            If she delivers first, they could keep the code and not pay. If they pay first, she could
+            disappear. Neither can realistically take the other to court. Kept is for that deal: a
+            freelance developer and a small company, paying in dollars, milestone by milestone.
+          </p>
+          <p className="text-ink-soft">
+            They are technical, but they are not crypto people. So Kept speaks in deals, deadlines
+            and dollars, and GitHub pull requests are part of the deal. Addresses and blockchain
+            terms stay under &ldquo;Details&rdquo;, and every payment has a public receipt for
+            anyone who wants to check.
+          </p>
+        </div>
       </section>
 
       <Steps />
