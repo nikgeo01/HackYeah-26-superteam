@@ -4,7 +4,12 @@
   "type": "module",
   "scripts": {
     "lint": "prettier \"**/*.{js,ts,json}\" --check",
-    "lint:fix": "prettier \"**/*.{js,ts,json}\" -w"
+    "lint:fix": "prettier \"**/*.{js,ts,json}\" -w",
+    "check": "cargo fmt --all -- --check && cargo clippy -p milestone-escrow --all-targets -- -D warnings && cargo test -p milestone-escrow && tsc --noEmit && anchor test",
+    "idl:sync": "node scripts/idl-sync.ts",
+    "proof:constants": "node scripts/gen-proof-constants.ts",
+    "devnet:smoke": "node scripts/devnet-smoke.ts",
+    "devnet:e2e": "node scripts/e2e-devnet.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "^1.1.2"
