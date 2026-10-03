@@ -1,0 +1,27 @@
+{
+  "claimData": {
+    "provider": "http",
+    "parameters": "{\"body\":\"\",\"method\":\"GET\",\"responseMatches\":[{\"type\":\"contains\",\"value\":\"\\\"merged_at\\\":\\\"2\"}],\"responseRedactions\":[],\"url\":\"https://api.github.com/repos/nikgeo01/kept-demo/issues/1\"}",
+    "owner": "0x27ea5052b677288a6bd3fba26c9d2a61c11dd2fc",
+    "timestampS": 1791036295,
+    "context": "{\"contextAddress\":\"ZwRX6t8jT4wSamrXnJS616ZDi5UnESfc8D7x4aTitfW\",\"contextMessage\":\"kept:v1:533c40623b2162fcd5b70dcd274a6e891ddc368fa9dbd2adce7fa0894f191a01:0\",\"providerHash\":\"0x08f151bb0213f306a871a1c50703b04b2b4fe12b138f63785de94511efec5135\"}",
+    "identifier": "0xc8d546f3d0058c2ed996ad0cc24ec7ac549ffdadc4ba00ed9e38f03703e9dd0c",
+    "epoch": 1
+  },
+  "identifier": "0xc8d546f3d0058c2ed996ad0cc24ec7ac549ffdadc4ba00ed9e38f03703e9dd0c",
+  "signatures": [
+    "0xeec29bad1e95a36dce62c642223dac6e859b53b84e74fdacc9dfb4846c6c285876a061e0dfd5ee80d40dbc48b1e5eabb34bd5238b7bc7f022165eaed8091127a1c"
+  ],
+  "witnesses": [
+    {
+      "id": "0x244897572368eadf65bfbc5aec98d8e5443a9072",
+      "url": "wss://attestor.reclaimprotocol.org:444/ws"
+    }
+  ],
+  "meta": {
+    "note": "Real attestor proof from scripts/reclaim-spike.ts (WP-01). Contains no access token and no auth header.",
+    "url": "https://api.github.com/repos/nikgeo01/kept-demo/issues/1",
+    "contextMessage": "kept:v1:533c40623b2162fcd5b70dcd274a6e891ddc368fa9dbd2adce7fa0894f191a01:0",
+    "recordedAt": "2026-10-03T14:05:16.343Z"
+  }
+}

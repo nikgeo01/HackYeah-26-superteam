@@ -1,8 +1,8 @@
 # Proof spike (WP-01)
 
-**Status: NOT RUN YET. It needs `RECLAIM_APP_ID` / `RECLAIM_APP_SECRET` and a read-only GitHub PAT.**
+**Status: RUN on 2026-10-03 against `nikgeo01/kept-demo` (PR #1 merged, PR #2 open with bait text).**
 
-**Decision: (go / no-go): _pending_**
+**Decision: GO.** A real Reclaim proof verifies with the program's own checks (unit test `real_attestor_proof_verifies`), and every forgery attempt against the new design failed.
 
 This page records what the attestor actually signs, so the on-chain checks
 (INTERFACE 3.9) are built from real bytes and not from guesses. Every `_pending_`
@@ -48,51 +48,30 @@ output is also saved to `.demo/spike-report.json`, which is gitignored).
 
 | Item | Value |
 |---|---|
-| Date run, zk-fetch version | _pending_ (zk-fetch 1.1.0) |
-| `claimData.provider` | _pending_ (expected `http`) |
-| Exact `claimData.parameters` | _pending_ |
-| Parameter bytes before the URL (`PROOF_PARAMS_BEFORE_URL`) | _pending_ |
-| Parameter bytes after the URL (`PROOF_PARAMS_AFTER_URL`) | _pending_ |
-| Parameters equal to the IDL placeholder? | _pending_ |
-| Spacing of the `merged_at` needle in GitHub's response | _pending_. The match `"merged_at": "2` was used. If GitHub returns compact JSON here, switch to the regex `"merged_at":\s*"\d{4}-` (INTERFACE 3.9). |
-| Exact `claimData.context` | _pending_ |
-| Context byte length (must be ≤ 512) | _pending_ |
-| Keys the attestor adds to the context (e.g. `extractedParameters`, `providerHash`) | _pending_ |
-| Does `contextAddress` accept a Solana address? | _pending_. The spike tries a base58 address first and falls back to `0x0`. The client currently sends `0x0` (override with `PROOF_CONTEXT_ADDRESS`). |
-| identifier / owner / timestampS / epoch | _pending_ |
-| Is `claimData.owner` lowercase? | _pending_. `client/proof.ts` lowercases it either way. |
-| `witnesses[0].id` | _pending_ |
-| Signature length and last byte (`v` convention) | _pending_. The program expects `v` to be 27 or 28; `proofArgsFromReclaim` turns 0 or 1 into 27 or 28. |
-| Identifier recomputed as keccak256(provider \n parameters \n context) | _pending_ |
-| Recovered signer = `witnesses[0].id` = `0x244897572368eadf65bfbc5aec98d8e5443a9072` | _pending_ |
-| Determinism: `parameters` byte-identical across runs | _pending_ (the volatile span, if any: _pending_) |
-| Latency (wall clock per zkFetch) | _pending_. This sets the UI request timeout (PLAN 4.4). |
+| Date run, zk-fetch version | 2026-10-03, zk-fetch 1.1.0 |
+| `claimData.provider` | `http` |
+| Exact `claimData.parameters` | `{"body":"","method":"GET","responseMatches":[{"type":"contains","value":"\"merged_at\":\"2"}],"responseRedactions":[],"url":"https://api.github.com/repos/nikgeo01/kept-demo/issues/1"}` |
+| Parameter bytes before / after the URL | Regenerated into `programs/milestone_escrow/src/proof/generated.rs` by `scripts/gen-proof-constants.ts` |
+| Parameters equal to the old IDL placeholder? | No: the real request has no `geoLocation`, `headers` or `paramValues` keys. Constants regenerated. |
+| Spacing of the `merged_at` needle | GitHub returns compact JSON: the match is `"merged_at":"2` (no space). The spaced form found nothing. |
+| Context | `{"contextAddress":"<solana address>","contextMessage":"kept:v1:<deal hex>:<index>","providerHash":"0x…"}`, 243 bytes (limit 512) |
+| Keys the attestor adds to the context | `providerHash` only |
+| Does `contextAddress` accept a Solana address? | Yes |
+| Is `claimData.owner` lowercase? | Yes |
+| `witnesses[0].id` | `0x244897572368eadf65bfbc5aec98d8e5443a9072` (the Reclaim attestor) |
+| Signature length and `v` | 65 bytes, `v` = 27 |
+| Identifier recomputed as keccak256(provider \n parameters \n context) | Yes |
+| Recovered signer equals the witness and the Reclaim attestor | Yes |
+| Determinism | `parameters` byte-identical across runs |
+| Latency per zkFetch | 3.5 to 7.6 seconds |
 
-## Attack test (open PR)
+## Attack test (open PR #2)
 
 | Design | Request | Private `Accept` | Expected | Result |
 |---|---|---|---|---|
-| Old | `/pulls/2`, match `"merged": true` | `application/vnd.github.patch` | proof produced (the forgery) | _pending_ |
-| New | `/issues/2`, match `"merged_at": "2` | `application/vnd.github.patch` | no proof | _pending_ |
-| New | `/issues/2` | `application/vnd.github.diff` | no proof | _pending_ |
-| New | `/issues/2` | `application/vnd.github.raw+json` | no proof | _pending_ |
-| New | `/issues/2` | `application/vnd.github.html+json` | no proof | _pending_ |
-| New | `/issues/2` | `application/vnd.github.full+json` | no proof | _pending_ |
-
-If any row of the new design produces a proof, stop: the proof feature must not
-ship as acceptance, and this page must say so.
-
-## If the result is no-go
-
-The no-go path keeps the same instruction and the same checks. The deal's
-`proof_attestor` is set to a key we hold, and `scripts/trusted-checker.ts` checks the
-GitHub API and signs the same claim format:
-
-```
-node scripts/trusted-checker.ts --generate          # once; put TRUSTED_CHECKER_KEY in .env
-node scripts/trusted-checker.ts --address           # use as the deal's proof_attestor
-node scripts/trusted-checker.ts --deal <addr> --index 0 --save .demo/proofs/d.json
-node scripts/prove.ts --deal <addr> --index 0 --load .demo/proofs/d.json
-```
-
-Everywhere it appears, it is called a "trusted checker (temporary)" and never a proof.
+| Old | `/pulls/2`, match `"merged": true` | `application/vnd.github.patch` | proof produced (the forgery) | **proof produced**: the old design is forgeable |
+| New | `/issues/2`, match `"merged_at":"2` | `application/vnd.github.patch` | no proof | no proof |
+| New | `/issues/2` | `application/vnd.github.diff` | no proof | no proof |
+| New | `/issues/2` | `application/vnd.github.raw+json` | no proof | no proof |
+| New | `/issues/2` | `application/vnd.github.html+json` | no proof | no proof |
+| New | `/issues/2` | `application/vnd.github.full+json` | no proof | no proof |

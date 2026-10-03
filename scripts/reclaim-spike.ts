@@ -2,7 +2,7 @@
 // token exist; record the output in docs/PROOF_SPIKE.md.
 //
 //  4. zkFetch the Issues endpoint of a merged PR, token in private headers,
-//     response match `contains "merged_at": "2`, context bound to a deal.
+//     response match `contains "merged_at":"2`, context bound to a deal.
 //  5. Print every field the plan needs pinned.
 //  6. Recompute the identifier: keccak256(provider \n parameters \n context).
 //  7. Rebuild the signed message (3.9 step 6) and recover the signer.
@@ -51,7 +51,7 @@ Writes the fixture and a full report to .demo/spike-report.json.
 `;
 
 /** The needle the plan specifies; the spike pins its spacing. */
-const NEEDLE = `"merged_at": "2`;
+const NEEDLE = `"merged_at":"2`;
 const OLD_DESIGN_NEEDLE = `"merged": true`;
 const ATTACK_ACCEPTS = [
   "application/vnd.github.patch",
@@ -104,10 +104,17 @@ function assertNoSecrets(text: string, secrets: string[]): void {
   for (const s of secrets)
     if (s && text.includes(s))
       throw new Error("the fixture contains a secret; not saving it");
-  if (/authorization|bearer\s/i.test(text))
+  const hit = /authorization|bearer\s/i.exec(text);
+  if (hit) {
+    // Show where, with any long token-like strings masked, so the cause can be
+    // fixed without printing a secret.
+    const around = text
+      .slice(Math.max(0, hit.index - 120), hit.index + 120)
+      .replace(/[A-Za-z0-9_\-]{24,}/g, "<masked>");
     throw new Error(
-      "the fixture mentions an Authorization header; not saving it",
+      `the fixture mentions an Authorization header; not saving it. Context: ${around}`,
     );
+  }
 }
 
 run(async () => {
@@ -353,7 +360,7 @@ run(async () => {
   const fixture = {
     ...first.proof,
     meta: {
-      note: "Real attestor proof from scripts/reclaim-spike.ts (WP-01). Contains no token or Authorization header.",
+      note: "Real attestor proof from scripts/reclaim-spike.ts (WP-01). Contains no access token and no auth header.",
       url,
       contextMessage,
       recordedAt: new Date().toISOString(),

@@ -2038,7 +2038,7 @@ export type MilestoneEscrow = {
     {
       "name": "proofParamsBeforeUrl",
       "type": "string",
-      "value": "\"{\\\"body\\\":\\\"\\\",\\\"geoLocation\\\":\\\"\\\",\\\"headers\\\":{},\\\"method\\\":\\\"GET\\\",\\\"paramValues\\\":{},\\\"responseMatches\\\":[{\\\"type\\\":\\\"contains\\\",\\\"value\\\":\\\"\\\\\\\"merged_at\\\\\\\": \\\\\\\"2\\\"}],\\\"responseRedactions\\\":[],\\\"url\\\":\\\"\""
+      "value": "\"{\\\"body\\\":\\\"\\\",\\\"method\\\":\\\"GET\\\",\\\"responseMatches\\\":[{\\\"type\\\":\\\"contains\\\",\\\"value\\\":\\\"\\\\\\\"merged_at\\\\\\\":\\\\\\\"2\\\"}],\\\"responseRedactions\\\":[],\\\"url\\\":\\\"\""
     },
     {
       "name": "proofProvider",

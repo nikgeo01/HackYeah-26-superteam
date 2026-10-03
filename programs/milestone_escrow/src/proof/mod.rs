@@ -79,6 +79,44 @@ mod tests {
         );
     }
 
+    /// A real proof from the Reclaim attestor (fixtures/proof-pr-merged.json):
+    /// the program's rebuilt parameters reproduce its identifier, and its
+    /// signature recovers the Reclaim attestor address.
+    #[test]
+    fn real_attestor_proof_verifies() {
+        let context = r#"{"contextAddress":"ZwRX6t8jT4wSamrXnJS616ZDi5UnESfc8D7x4aTitfW","contextMessage":"kept:v1:533c40623b2162fcd5b70dcd274a6e891ddc368fa9dbd2adce7fa0894f191a01:0","providerHash":"0x08f151bb0213f306a871a1c50703b04b2b4fe12b138f63785de94511efec5135"}"#;
+        let identifier = claim_identifier(&expected_parameters("nikgeo01/kept-demo", 1), context);
+        assert_eq!(
+            to_hex(&identifier),
+            "c8d546f3d0058c2ed996ad0cc24ec7ac549ffdadc4ba00ed9e38f03703e9dd0c"
+        );
+
+        let deal =
+            from_hex::<32>("533c40623b2162fcd5b70dcd274a6e891ddc368fa9dbd2adce7fa0894f191a01");
+        assert!(context.contains(&binding_needle(&deal, 0)));
+
+        let signature = from_hex::<65>("eec29bad1e95a36dce62c642223dac6e859b53b84e74fdacc9dfb4846c6c285876a061e0dfd5ee80d40dbc48b1e5eabb34bd5238b7bc7f022165eaed8091127a1c");
+        let message = verify::signed_message(
+            &identifier,
+            "0x27ea5052b677288a6bd3fba26c9d2a61c11dd2fc",
+            1_791_036_295,
+            1,
+        );
+        let signer = verify::recover_address(&verify::personal_sign_digest(&message), &signature);
+        assert_eq!(
+            to_hex(&signer.unwrap()),
+            "244897572368eadf65bfbc5aec98d8e5443a9072"
+        );
+    }
+
+    fn from_hex<const N: usize>(s: &str) -> [u8; N] {
+        let mut out = [0u8; N];
+        for (i, byte) in out.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(&s[2 * i..2 * i + 2], 16).unwrap();
+        }
+        out
+    }
+
     #[test]
     fn identifier_depends_on_pr() {
         let a = claim_identifier(&expected_parameters("a/b", 1), "{}");
