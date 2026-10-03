@@ -59,7 +59,7 @@ function useMoment(still: boolean): Moment {
   return { kind: "paid", loop };
 }
 
-const PHASES = ["Locked", "Delivered", "Review", "Paid"];
+const PHASES = ["Locked", "Delivery", "Review", "Paid"];
 
 function SideRow({ n, what, state, note }: { n: number; what: string; state: NodeState; note: string }) {
   return (

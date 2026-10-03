@@ -48,7 +48,7 @@ export function ObjectionDialog({
               This locks <strong>{formatAmount(deposit)}</strong> from your
               account as a deposit.{" "}
               <strong>
-                You lose it if the panel sides with the freelancer
+                You lose it if the arbiters side with the freelancer
               </strong>
               , or if you later concede.
             </li>

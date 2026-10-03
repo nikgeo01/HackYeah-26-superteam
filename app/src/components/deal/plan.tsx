@@ -62,8 +62,8 @@ export interface MilestonePlan {
   stamp: string | null;
 }
 
-const PAID_PHASES = ["Locked", "Delivered", "In review", "Paid"];
-const DISPUTE_PHASES = ["Delivered", "Objection", "Voting", "Decided"];
+const PAID_PHASES = ["Locked", "Delivery", "Review", "Paid"];
+const DISPUTE_PHASES = ["Delivery", "Objection", "Vote", "Decision"];
 
 const clamp = (x: number) => Math.max(0, Math.min(1, x));
 const elapsed = (deadline: number, windowSecs: number, now: number) =>

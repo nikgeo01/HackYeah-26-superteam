@@ -177,7 +177,7 @@ export function MilestoneRow({
             </Btn>
             <span className="max-w-[40ch] text-micro text-ink-soft">
               {deposit > 0n
-                ? `Locks ${formatAmount(deposit)}; you lose it if the panel sides with the freelancer.`
+                ? `Locks ${formatAmount(deposit)}; you lose it if the arbiters side with the freelancer.`
                 : "Free in this deal."}
             </span>
           </span>

@@ -30,7 +30,7 @@ export const DEMO_ROLES: readonly DemoRole[] = [
   },
   {
     id: "worker",
-    label: "Worker",
+    label: "Freelancer",
     badge: "border-ink/60 text-ink",
     blurb: "Kasia, the freelance developer.",
   },

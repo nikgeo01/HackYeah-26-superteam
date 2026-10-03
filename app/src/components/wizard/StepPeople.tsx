@@ -120,7 +120,7 @@ export function StepPeople({
             onChange={(worker) => update({ worker })}
             invalid={!!err("worker")}
             demo={demoWorker}
-            demoLabel="Worker"
+            demoLabel="Freelancer"
           />
         </Field>
       </Part>

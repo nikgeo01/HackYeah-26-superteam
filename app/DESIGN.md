@@ -121,3 +121,16 @@ The first pass was "a fintech dashboard". It had a dark navy header, a gradient 
 - **Cream + serif → pale ledger green + one grotesk.** Accounting paper is on-subject, and it avoids the warm-cream default.
 - **Monospace for addresses → dropped.** Addresses are shortened and set in the grotesk with tabular figures; the full value lives in Details.
 - **Arrows on buttons and middle-dot meta strings → dropped.** Buttons say exactly what happens ("Approve and pay 5.00 tUSDC").
+
+## Built pieces worth knowing
+
+- **Primitives** in `src/components/ui/`:
+  - `index.tsx`: Button, Amount, Tag, Stamp, Sheet, Ledger, Heading, Notice, TrackNode, PhaseRun.
+  - `InlineAmount`: an amount inside a sentence, with a readable currency.
+  - `Clock`: tabular digits with a normal-width colon. This face's tabular colon renders as "00 : 41".
+  - `ButtonLink` and `Segmented`.
+- **Deal logic for display:** `src/components/deal/plan.tsx` is pure. Per milestone it returns the phases, the sentence, the actions, the viewer's move, the next event and the stamp. `DealSheet` composes the page.
+- **Design QA in dev only:** `#/_states?s=<scenario>&as=<viewer>` renders the real deal sheet from fixtures.
+  - Scenarios: open, open-expired, pending, submitted, release (`&play=1` lands the stamp), disputed, disputed-over, approved, withdraw, settled, cancelled, cancel-requested, proof.
+  - Viewers: client, worker, arbiter1, arbiter2, stranger.
+  - The page is not in the production bundle.
