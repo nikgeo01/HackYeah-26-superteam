@@ -1,0 +1,60 @@
+name: pages
+
+# Publishes the web app (app/) to GitHub Pages:
+# https://nikgeo01.github.io/HackYeah-26-superteam/
+# The build settings are repository secrets. They hold only throwaway devnet
+# demo keys and test-token settings, which are public once bundled anyway.
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "client/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Build
+        working-directory: app
+        env:
+          VITE_CLUSTER: ${{ secrets.VITE_CLUSTER }}
+          VITE_PROGRAM_ID: ${{ secrets.VITE_PROGRAM_ID }}
+          VITE_TUSDC_MINT: ${{ secrets.VITE_TUSDC_MINT }}
+          VITE_FAUCET_SECRET: ${{ secrets.VITE_FAUCET_SECRET }}
+          VITE_DEMO_MODE: ${{ secrets.VITE_DEMO_MODE }}
+          VITE_DEMO_ACTORS: ${{ secrets.VITE_DEMO_ACTORS }}
+          VITE_DEMO_DEALS: ${{ secrets.VITE_DEMO_DEALS }}
+          VITE_PROVER_URL: ${{ secrets.VITE_PROVER_URL }}
+          VITE_DEFAULT_ATTESTOR: ${{ secrets.VITE_DEFAULT_ATTESTOR }}
+        run: |
+          npm ci
+          npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
