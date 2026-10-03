@@ -1,9 +1,9 @@
 # HackTribe submission: description (draft)
 
 - **Project title:** Kept: escrow without the platform
-- **Team name:** TODO(team-name)
-- **Team members:** TODO(team-members)
-- **Links:** repository TODO(link: repo), hosted demo TODO(link: demo), video TODO(link: video),
+- **Team name:** Sector A
+- **Team members:** Nikola Georgiev, Boyan Gerasimov
+- **Links:** repository https://github.com/nikgeo01/HackYeah-26-superteam, hosted demo https://nikgeo01.github.io/HackYeah-26-superteam/, video TODO(link: video),
   program on the explorer: https://explorer.solana.com/address/A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer?cluster=devnet
 
 ---

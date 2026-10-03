@@ -8,7 +8,7 @@ numbers and names.
 - One-liner: milestone escrow for freelance developers; the rules live in a Solana program,
   not a platform.
 - Built for Kasia, a freelance developer in Kraków with a client abroad she has never met.
-- Team: TODO(team-name, members).
+- Team: Sector A (Nikola Georgiev, Boyan Gerasimov).
 
 *Speaker notes:* "Kept lets a freelancer and a client work together without a platform in
 the middle. Our user is Kasia." Keep it under 20 seconds.
@@ -101,8 +101,8 @@ proofs."
   release, multiple attestors, verifiable build, mainnet pilot with a real stablecoin,
   notifications, Polish-language UI.
 - Potential: works with any classic SPL stablecoin, no backend needed.
-- Links: repo TODO(link), demo TODO(link), video TODO(link), program
+- Links: repo https://github.com/nikgeo01/HackYeah-26-superteam, demo https://nikgeo01.github.io/HackYeah-26-superteam/, video TODO(link), program
   `A8JXDe5Fy9fvBGMZoQhzEbTF8KVpiwtvnQYJHkzM4Qer`.
-- Team TODO(team-name, members).
+- Team: Sector A (Nikola Georgiev, Boyan Gerasimov).
 
 *Speaker notes:* close with the one-liner.
