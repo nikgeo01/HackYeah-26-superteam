@@ -76,8 +76,8 @@ This is irreversible and the program's rent can never be reclaimed afterwards.
 | Demo deals D1–D8 seeded against the deployed binary | done |
 | No open interface change | done |
 | Rollback reserve of at least 2× program rent (about 4.1 SOL) | done (7.067183348 SOL) |
-| Two manual dry runs through the app in a browser | open |
-| Full backup recording of the demo | open |
+| Two manual dry runs through the app in a browser | done 2026-10-03 18:20: (1) create, accept, deliver, 30 s countdown, passer-by releases; (2) objection with deposit, two arbiter votes, settled in the vote transaction (freelancer received 111 = 101 + 10 deposit on-chain) |
+| Full backup recording of the demo | partial: `~/Downloads/kept-demo-dry-run.gif` (50 frames: dry run 1 complete, dry run 2 partly). A screen recording with narration is still recommended for the video. |
 | Both developers say "go" | open |
 
 Command, when all gates pass and Nikola says go:
