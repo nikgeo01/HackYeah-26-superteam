@@ -36,7 +36,7 @@ export function Segmented<T extends string>({
             type="button"
             aria-pressed={on}
             onClick={() => onChange(s.id)}
-            className={`inline-flex items-baseline gap-1.5 rounded-[4px] px-3 py-1.5 text-sm transition-colors ${
+            className={`inline-flex items-baseline gap-1.5 rounded-[4px] px-2.5 py-1.5 sm:px-3 text-sm transition-colors ${
               on
                 ? "border border-rule bg-sheet font-semibold text-ink"
                 : "border border-transparent text-ink-soft hover:text-ink"

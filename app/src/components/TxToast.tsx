@@ -10,14 +10,15 @@ const STATUS_TEXT: Record<Toast["status"], string> = {
   failed: "Did not go through.",
 };
 
-/** The torn top edge of a slip: a row of small teeth in sheet colour. */
-const TORN_EDGE = {
-  backgroundImage:
-    "linear-gradient(135deg, var(--color-sheet) 4px, transparent 0), linear-gradient(225deg, var(--color-sheet) 4px, transparent 0)",
-  backgroundSize: "8px 8px",
+/** The torn top edge of a slip: a row of teeth, drawn twice (rule colour, then sheet 1px lower). */
+const teeth = (colour: string) => ({
+  backgroundImage: `linear-gradient(135deg, ${colour} 5px, transparent 0), linear-gradient(225deg, ${colour} 5px, transparent 0)`,
+  backgroundSize: "10px 10px",
   backgroundPosition: "left bottom",
   backgroundRepeat: "repeat-x",
-} as const;
+});
+const TORN_RULE = teeth("var(--color-rule)");
+const TORN_SHEET = teeth("var(--color-sheet)");
 
 /** One transaction toast: pending, confirmed or failed, with receipt links. */
 export function TxToast({
@@ -31,11 +32,12 @@ export function TxToast({
   return (
     <div
       role={failed ? "alert" : "status"}
-      className={`relative mt-[7px] w-80 max-w-[calc(100vw-2rem)] rounded-b-[var(--radius-control)] border-x border-b bg-sheet px-4 pb-3 pt-2.5 text-sm ${
+      className={`relative mt-[9px] w-80 max-w-[calc(100vw-2rem)] rounded-b-[var(--radius-control)] border-x border-b bg-sheet px-4 pb-3 pt-2.5 text-sm ${
         failed ? "border-void/70" : "border-rule"
       }`}
     >
-      <span aria-hidden className="absolute inset-x-[-1px] -top-[7px] h-2" style={TORN_EDGE} />
+      <span aria-hidden className="absolute inset-x-[-1px] -top-[9px] h-[10px]" style={TORN_RULE} />
+      <span aria-hidden className="absolute inset-x-0 -top-[8px] h-[10px]" style={TORN_SHEET} />
       {failed && <span aria-hidden className="absolute inset-y-0 left-[-1px] w-[3px] bg-void" />}
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold leading-snug text-ink">{toast.label}</p>
