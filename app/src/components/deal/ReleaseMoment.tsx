@@ -10,6 +10,7 @@ import { settleMilestoneIx } from "../../lib/instructions";
 import { crankReady } from "../../lib/outcomes";
 import { formatAmount, formatCountdown, shortAddress } from "../../lib/format";
 import { Amount, splitAmount } from "../ui";
+import { ClockText } from "./Countdown";
 import {
   Btn,
   Spinner,
@@ -70,7 +71,7 @@ export function ReleaseMoment({
             aria-live="off"
             className={`tnum text-display font-[650] leading-none tracking-[-0.03em] transition-colors duration-700 ${urgent ? "text-clock" : "text-ink"}`}
           >
-            {formatCountdown(left)}
+            <ClockText text={formatCountdown(left)} />
           </p>
           {left > 0 && (
             <p className="max-w-[36ch] pb-1 text-micro text-ink-soft">
@@ -111,7 +112,7 @@ export function ReleaseMoment({
         className="tnum text-display font-[650] leading-none tracking-[-0.03em] text-stamp"
         aria-hidden
       >
-        00:00
+        <ClockText text="00:00" />
       </p>
       <div className="space-y-3">
         <h4 className="text-title font-semibold leading-snug tracking-[-0.01em] text-ink">

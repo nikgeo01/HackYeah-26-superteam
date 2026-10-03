@@ -99,7 +99,7 @@ export function DealHeader({
             <Amount value={total.value} symbol={total.symbol} size="xl" />
           </h1>
           <p className="text-body text-ink-soft">
-            Held in escrow for {n} milestone{n === 1 ? "" : "s"}.{" "}
+            {settled ? "Paid out over" : "Held in escrow for"} {n} milestone{n === 1 ? "" : "s"}.{" "}
             <span className="font-semibold text-ink">{status}</span>
             {!settled && deal.settledCount > 0 && `, ${deal.settledCount} of ${n} settled`}.
           </p>

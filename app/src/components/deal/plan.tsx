@@ -153,8 +153,8 @@ export function planMilestone(
     plan.progress = 0.04;
     plan.sentence = (
       <>
-        Waiting for the freelancer to accept. After that they have {formatDuration(m.dueSecs)} to
-        deliver.
+        Starts when {role === "worker" ? "you accept" : "the freelancer accepts"}. Then{" "}
+        {role === "worker" ? "you have" : "they have"} {formatDuration(m.dueSecs)} to deliver.
       </>
     );
     return plan;
@@ -232,17 +232,8 @@ export function planMilestone(
     plan.progress = elapsed(m.reviewDeadline, deal.reviewWindowSecs, now);
     plan.urgent = left > 0 && left <= 10;
     if (left > 0) {
-      plan.sentence =
-        role === "worker" ? (
-          <>Delivered. If the client says nothing, you are paid in {when(m.reviewDeadline, now)}.</>
-        ) : role === "client" ? (
-          <>
-            Delivered. Approve or object; if you say nothing, the freelancer is paid in{" "}
-            {when(m.reviewDeadline, now)}.
-          </>
-        ) : (
-          <>Delivered. If the client says nothing, the freelancer is paid in {when(m.reviewDeadline, now)}.</>
-        );
+      // The row's large review clock says what happens next, and when.
+      plan.sentence = null;
       plan.next = { at: m.reviewDeadline, text: `milestone ${n} is paid to the freelancer unless the client objects` };
     } else if (!ready) {
       plan.progress = 1;
@@ -325,8 +316,8 @@ export function planMilestone(
     } else {
       plan.sentence = (
         <>
-          The client objected. The arbiters vote until the clock runs out, in{" "}
-          {when(m.voteDeadline, now)}; with no majority by then, the payment is split 50/50.
+          The client objected. The arbiters have {when(m.voteDeadline, now)} left to vote; with no
+          majority by then, the payment is split 50/50.
         </>
       );
       plan.next = { at: m.voteDeadline, text: `voting on milestone ${n} ends` };

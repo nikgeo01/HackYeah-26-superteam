@@ -5,7 +5,7 @@ import type { PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID } from "../../lib/idl";
 import { vaultPda } from "../../lib/pdas";
 import { proofsEnabled, type DealView, type Role } from "../../lib/deals";
-import { formatAmount, formatDateTime, formatDuration } from "../../lib/format";
+import { explorerAddressUrl, formatAmount, formatDateTime, formatDuration } from "../../lib/format";
 import { Ledger } from "../ui";
 import { AddressLink, ARBITER_LABEL, LINK, PullLink, repoUrl, RoleChip } from "./common";
 
@@ -81,6 +81,14 @@ export function TermsPanel({ deal, me }: { deal: DealView; me: PublicKey | null 
   rules.push({ label: "Created", value: formatDateTime(deal.createdAt) });
 
   const details: { label: ReactNode; value: ReactNode }[] = [
+    {
+      label: "Receipts",
+      value: (
+        <a href={explorerAddressUrl(deal.address)} target="_blank" rel="noreferrer" className={LINK}>
+          Transaction history
+        </a>
+      ),
+    },
     { label: "Deal account (PDA)", value: <AddressLink address={deal.address} chars={8} /> },
     { label: "Vault (holds the money)", value: <AddressLink address={vault} chars={8} /> },
     { label: "Token mint", value: <AddressLink address={deal.mint} chars={8} /> },

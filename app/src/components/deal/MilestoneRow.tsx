@@ -18,11 +18,10 @@ import {
   voteIxs,
 } from "../../lib/instructions";
 import { crankReady, payoutFor, voteDecides, type SideName } from "../../lib/outcomes";
-import { explorerAddressUrl, formatAmount, formatDateTime } from "../../lib/format";
+import { formatAmount, formatDateTime } from "../../lib/format";
 import { Amount, PhaseRun, splitAmount, Stamp, Tag, TrackNode } from "../ui";
 import {
   Btn,
-  LINK,
   PullLink,
   Spinner,
   TxLink,
@@ -42,7 +41,7 @@ function hexShort(bytes: Uint8Array): string {
   return `${hex.slice(0, 10)}…${hex.slice(-6)}`;
 }
 
-function SettledReceipt({ deal, receipt }: { deal: DealView; receipt?: MilestoneReceipt }) {
+function SettledReceipt({ receipt }: { receipt?: MilestoneReceipt }) {
   if (receipt?.kind === "silence") return <PaidByRule receipt={receipt} />;
   if (receipt)
     return (
@@ -51,15 +50,8 @@ function SettledReceipt({ deal, receipt }: { deal: DealView; receipt?: Milestone
         <TxLink signature={receipt.signature} />
       </p>
     );
-  return (
-    <p className="text-sm text-ink-soft">
-      Receipts for this deal are in its{" "}
-      <a href={explorerAddressUrl(deal.address)} target="_blank" rel="noreferrer" className={LINK}>
-        transaction history
-      </a>
-      .
-    </p>
-  );
+  // Without a receipt from this browser, the deal's transaction history (in Details) has it.
+  return null;
 }
 
 export function MilestoneRow({
@@ -278,7 +270,7 @@ export function MilestoneRow({
             )}
           </div>
           {plan.stamp && (
-            <Stamp land={settled && sawUnsettled} tone={m.outcome === "cancelled" ? "ink" : "stamp"} className="mr-1 mt-1">
+            <Stamp land={settled && sawUnsettled} tone={m.outcome === "cancelled" ? "ink" : "stamp"} className="mr-1 mt-1 [&>span]:px-3.5 [&>span]:py-1.5 [&>span]:text-[0.95rem]">
               {plan.stamp}
             </Stamp>
           )}
@@ -293,12 +285,14 @@ export function MilestoneRow({
           />
         </div>
 
-        <p className="flex max-w-[68ch] items-start gap-2 text-body text-ink">
-          {plan.waiting && <Spinner className="mt-1.5" />}
-          <span>{plan.sentence}</span>
-        </p>
+        {plan.sentence && (
+          <p className="flex max-w-[68ch] items-start gap-2 text-body text-ink">
+            {plan.waiting && <Spinner className="mt-1.5" />}
+            <span>{plan.sentence}</span>
+          </p>
+        )}
 
-        {settled && <SettledReceipt deal={deal} receipt={receipt} />}
+        {settled && <SettledReceipt receipt={receipt} />}
 
         {m.status === "submitted" && (
           <p className="text-micro text-ink-soft">

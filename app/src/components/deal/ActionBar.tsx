@@ -84,9 +84,9 @@ function AcceptTerms({ deal }: { deal: DealView }) {
         <li>
           Arbiters:{" "}
           {deal.judges.map((j, i) => (
-            <span key={j.toBase58()} className="mr-3 inline-block">
-              {ARBITER_LABEL[i].replace("Arbiter picked", "picked")}, <AddressLink address={j} />
-              {i < 2 ? ";" : "."}
+            <span key={j.toBase58()}>
+              {ARBITER_LABEL[i].replace("Arbiter picked", "picked")} <AddressLink address={j} />
+              {i < 2 ? "; " : "."}
             </span>
           ))}
         </li>

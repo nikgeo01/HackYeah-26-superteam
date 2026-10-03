@@ -24,7 +24,7 @@ export function VoteTally({
         <span className="font-semibold text-ink">Arbiter votes:</span> {w} {word(w)} for the
         freelancer, {c} for the client. Two decide.
       </p>
-      <ul className="grid grid-cols-3 gap-2">
+      <ul className="grid max-w-2xl grid-cols-3 gap-2">
         {deal.judges.map((judge, slot) => {
           const vote = milestone.votes[slot];
           const mine = slot === mySlot;

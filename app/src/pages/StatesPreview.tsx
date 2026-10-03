@@ -257,10 +257,24 @@ function useTicker(): number {
   return now;
 }
 
-function ScenarioView({ scenario, only }: { scenario: Scenario; only: Viewer | null }) {
+function ScenarioView({
+  scenario,
+  only,
+  autoplay,
+}: {
+  scenario: Scenario;
+  only: Viewer | null;
+  autoplay: boolean;
+}) {
   const now = useTicker();
   const [t] = useState(() => Math.floor(Date.now() / 1000));
   const [played, setPlayed] = useState(false);
+  // ?play=1 settles the playable milestone after a moment, so a screenshot can catch the stamp.
+  useEffect(() => {
+    if (!autoplay || !scenario.playable) return;
+    const id = setTimeout(() => setPlayed(true), 1200);
+    return () => clearTimeout(id);
+  }, [autoplay, scenario.playable]);
   const { deal: d, receipts } = scenario.build(t, played);
   const viewers = only ? [only] : scenario.viewers;
   return (
@@ -309,7 +323,12 @@ export default function StatesPreview() {
           </Link>
         ))}
       </nav>
-      <ScenarioView key={scenario.id + (only ?? "")} scenario={scenario} only={only} />
+      <ScenarioView
+        key={scenario.id + (only ?? "")}
+        scenario={scenario}
+        only={only}
+        autoplay={params.get("play") === "1"}
+      />
     </div>
   );
 }

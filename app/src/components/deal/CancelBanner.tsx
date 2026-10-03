@@ -134,7 +134,7 @@ export function CancelBanner({
       </div>
     </div>
   ) : (
-    <Btn variant="ghost" onClick={() => setAsking(true)} data-preview-ok>
+    <Btn variant="ghost" className="-ml-3.5" onClick={() => setAsking(true)} data-preview-ok>
       Ask to cancel this deal
     </Btn>
   );
