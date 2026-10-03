@@ -104,7 +104,7 @@ open to anyone; whoever triggers it receives nothing.
 | 2 | Client approved, or a valid "PR merged" proof was accepted | Amount + any locked deposit | 0 |
 | 3a | Disputed, two arbiters sided with the freelancer | Amount + deposit | 0 |
 | 3b | Disputed, two arbiters sided with the client | 0 | Amount + deposit |
-| 4 | Deal cancelled by both sides, and no verdict recorded | 0 | Amount + deposit |
+| 4 | Deal cancelled (by the client before acceptance, by anyone after the accept deadline, or by both sides after acceptance), and no verdict recorded | 0 | Amount + deposit |
 | 5 | Disputed, voting time over without two matching votes | Half (the odd unit goes to the freelancer) | Half + deposit back |
 | 6 | Work delivered, client stayed silent until the review time ended ("silence pays") | Amount | 0 |
 | 7 | Nothing delivered by the due time | 0 | Amount |
