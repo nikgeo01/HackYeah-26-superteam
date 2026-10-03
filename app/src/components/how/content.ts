@@ -58,10 +58,14 @@ export const PAYOUT_ROWS: PayoutRow[] = [
 ];
 
 export const PAYOUT_NOTE =
-  "The rows are checked from top to bottom; the first that applies wins. That is why a decision already made (an approval, a proof, or two matching votes) always beats a later cancellation.";
+  "Because the first match wins, a decision already made (an approval, a proof, or two matching votes) always beats a later cancellation.";
 
 export interface DisappearRow {
+  /** The state the deal is stuck in. */
   who: string;
+  /** Who can get the money moving again. */
+  by: string;
+  /** How. */
   what: string;
 }
 
@@ -69,30 +73,37 @@ export interface DisappearRow {
 export const DISAPPEAR_ROWS: DisappearRow[] = [
   {
     who: "The freelancer never accepts",
+    by: "The client at once, anyone later",
     what: "The client can cancel at any time and gets everything back. After the accept time, anyone can do it for them.",
   },
   {
     who: "The freelancer stops delivering",
+    by: "Anyone, after the due time",
     what: "After a milestone's due time, anyone can send that money back to the client.",
   },
   {
     who: "The client goes silent after a delivery",
+    by: "Anyone, after the review time",
     what: "After the review time, anyone can release the payment to the freelancer. Silence pays.",
   },
   {
     who: "One or more arbiters do not vote",
+    by: "Two arbiters, or anyone after the voting time",
     what: "Two arbiters can still decide. If they do not, after the voting time anyone can split the payment 50/50.",
   },
   {
     who: "One side asks to cancel, the other is gone",
+    by: "Nobody needs to",
     what: "Nothing changes until the other side agrees. All normal rules and timers keep running.",
   },
   {
     who: "This website, the proof helper or its authors disappear",
+    by: "Anyone, without this website",
     what: "The money is unaffected. Anyone can call the program directly with the public scripts in the repository.",
   },
   {
     who: "GitHub or the attestor is down",
+    by: "The normal rules",
     what: "Only the GitHub release stops working. Approval, timers and arbiters still work.",
   },
 ];
@@ -100,46 +111,33 @@ export const DISAPPEAR_ROWS: DisappearRow[] = [
 export const DISAPPEAR_NOTE =
   "The one thing we cannot fix: if you lose your own wallet key, your payments still arrive at your address, but nobody can recover the key for you.";
 
+/** A cell of the permission table: true, or a short condition. Missing = not allowed. */
+export type Allowed = true | string;
+
 export interface PermissionRow {
   action: string;
-  who: string;
+  client?: Allowed;
+  worker?: Allowed;
+  arbiter?: Allowed;
+  anyone?: Allowed;
 }
 
-/** INTERFACE 3.11, condensed. */
+/** INTERFACE 3.11, condensed. "Anyone" includes every person in the deal. */
 export const PERMISSION_ROWS: PermissionRow[] = [
-  { action: "Create and fund a deal", who: "The client" },
-  { action: "Accept, deliver work", who: "The freelancer" },
-  {
-    action: "Approve, raise an objection, or give in during one",
-    who: "The client",
-  },
-  { action: "Vote on an objection", who: "Each arbiter, once, for their own seat" },
-  {
-    action: "Link a pull request to a milestone later",
-    who: "The client, once per milestone",
-  },
-  { action: "Submit a proof that a pull request was merged", who: "Anyone" },
-  {
-    action: "Cancel before the freelancer accepts",
-    who: "The client; anyone after the accept time",
-  },
-  {
-    action: "Cancel after the freelancer accepts",
-    who: "Only if both the client and the freelancer agree",
-  },
-  {
-    action: "Release a payment the rules allow, close a finished deal",
-    who: "Anyone",
-  },
-  {
-    action: "Receive money from the vault",
-    who: "Only the client or the freelancer. Never an arbiter, a stranger or us.",
-  },
-  {
-    action: "Replace the program's code",
-    who: "The upgrade key holder until the program is finalized; nobody afterwards (see the status below)",
-  },
+  { action: "Create and fund a deal", client: true },
+  { action: "Accept the deal, deliver work", worker: true },
+  { action: "Approve, object, or give in during an objection", client: true },
+  { action: "Vote on an objection", arbiter: "once, own seat" },
+  { action: "Link a pull request to a milestone later", client: "once per milestone" },
+  { action: "Prove that a pull request was merged", anyone: true },
+  { action: "Cancel before the freelancer accepts", client: true, anyone: "after the accept time" },
+  { action: "Cancel after the freelancer accepts", client: "both must agree", worker: "both must agree" },
+  { action: "Release a payment the rules allow, close a finished deal", anyone: true },
+  { action: "Receive money from the vault", client: true, worker: true },
 ];
+
+export const PERMISSION_NOTE =
+  "Nobody else, including us, can receive money from the vault. There is no admin button, no fee and no pause switch. Replacing the program's code is possible only for the upgrade key holder, and only until the program is finalized; see the status below.";
 
 /** PLAN 0, "Honest limits". */
 export const LIMITS: string[] = [

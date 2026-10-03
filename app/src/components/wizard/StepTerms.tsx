@@ -1,7 +1,8 @@
 // Step 2: milestones, timers, objection deposit and the optional GitHub release.
 import { TUSDC_SYMBOL, formatAmount, parseAmount } from "../../lib/format";
 import { DEFAULT_ATTESTOR } from "../../lib/env";
-import { Button, DurationInput, Field, inputClass } from "./fields";
+import { Button, Notice } from "../ui";
+import { DurationInput, Field, Part, inputClass } from "./fields";
 import {
   MAX_MILESTONES,
   newMilestone,
@@ -9,6 +10,39 @@ import {
   type DealDraft,
   type MilestoneDraft,
 } from "./model";
+
+/** An amount input with the currency written inside the box, on the right. */
+function MoneyInput({
+  id,
+  value,
+  onChange,
+  invalid,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  invalid: boolean;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        inputMode="decimal"
+        value={value}
+        placeholder={placeholder}
+        aria-invalid={invalid || undefined}
+        aria-describedby={`${id}-note`}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass(invalid)} figures pr-16 font-semibold`}
+      />
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-ink-soft">
+        {TUSDC_SYMBOL}
+      </span>
+    </div>
+  );
+}
 
 export function StepTerms({
   draft,
@@ -23,230 +57,212 @@ export function StepTerms({
 }) {
   const setMilestone = (key: number, patch: Partial<MilestoneDraft>) =>
     update({
-      milestones: draft.milestones.map((m) =>
-        m.key === key ? { ...m, ...patch } : m,
-      ),
+      milestones: draft.milestones.map((m) => (m.key === key ? { ...m, ...patch } : m)),
     });
   const removeMilestone = (key: number) =>
     update({ milestones: draft.milestones.filter((m) => m.key !== key) });
   const addMilestone = () =>
     update({
-      milestones: [
-        ...draft.milestones,
-        newMilestone(draft.milestones.at(-1)?.due),
-      ],
+      milestones: [...draft.milestones, newMilestone(draft.milestones.at(-1)?.due)],
     });
 
   const deposit = draft.deposit.trim() === "" ? 0n : parseAmount(draft.deposit);
   const repoSet = draft.repo.trim() !== "";
+  const count = draft.milestones.length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2 rounded-md bg-slate-100 px-3 py-2 text-sm">
-        <span className="text-slate-700">
-          Trying it out? Short timers let you see every rule in a few minutes.
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-[var(--radius-control)] border border-dashed border-rule px-3 py-2.5 text-sm">
+        <span className="text-ink-soft">
+          Trying it out? Short timers let you see every rule play out in a few minutes.
         </span>
-        <Button onClick={() => setDraft(withDemoTimings(draft))}>
+        <Button kind="plain" onClick={() => setDraft(withDemoTimings(draft))}>
           Use demo timings
         </Button>
       </div>
 
-      <section className="space-y-3">
-        <h3 className="font-semibold">Milestones</h3>
-        <p className="text-xs text-slate-600">
-          Each milestone is paid separately. The due time counts from the
-          moment the freelancer accepts the deal. If nothing is delivered by
-          then, that milestone's money can go back to you.
-        </p>
-        {err("milestones") && (
-          <p className="text-xs text-red-700">{err("milestones")}</p>
-        )}
-        {draft.milestones.map((m, i) => (
-          <div
-            key={m.key}
-            className="grid gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-[1fr_auto]"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                label={`Milestone ${i + 1}: amount (${TUSDC_SYMBOL})`}
-                htmlFor={`m${m.key}.amount`}
-                error={err(`m${m.key}.amount`)}
+      <Part
+        title="Milestones"
+        intro="Each milestone is paid on its own. Its due time counts from the moment the freelancer accepts; if nothing is delivered by then, that money can go back to you."
+      >
+        {err("milestones") && <p className="text-sm text-void">{err("milestones")}</p>}
+        <ol className="ledger border-y border-rule">
+          {draft.milestones.map((m, i) => (
+            <li key={m.key} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 py-4">
+              <span
+                aria-hidden
+                className="figures mt-7 flex h-7 w-7 items-center justify-center rounded-full border-2 border-ink text-sm font-semibold"
               >
-                <input
-                  id={`m${m.key}.amount`}
-                  inputMode="decimal"
-                  value={m.amount}
-                  placeholder="e.g. 250"
-                  onChange={(e) =>
-                    setMilestone(m.key, { amount: e.target.value })
-                  }
-                  className={inputClass(!!err(`m${m.key}.amount`))}
-                />
-              </Field>
-              <Field
-                label="Due within"
-                htmlFor={`m${m.key}.due`}
-                error={err(`m${m.key}.due`)}
-              >
-                <DurationInput
-                  id={`m${m.key}.due`}
-                  value={m.due}
-                  onChange={(due) => setMilestone(m.key, { due })}
-                  invalid={!!err(`m${m.key}.due`)}
-                />
-              </Field>
-              {(repoSet || m.pr !== "") && (
-                <Field
-                  label="Pull request number (optional)"
-                  htmlFor={`m${m.key}.pr`}
-                  hint="When this pull request is merged, the payment can be released with a proof from GitHub."
-                  error={err(`m${m.key}.pr`)}
-                >
-                  <input
-                    id={`m${m.key}.pr`}
-                    inputMode="numeric"
-                    value={m.pr}
-                    placeholder="e.g. 12"
-                    onChange={(e) =>
-                      setMilestone(m.key, { pr: e.target.value })
-                    }
-                    className={`${inputClass(!!err(`m${m.key}.pr`))} max-w-40`}
-                  />
-                </Field>
-              )}
-            </div>
-            {draft.milestones.length > 1 && (
-              <div>
-                <Button
-                  variant="link"
-                  onClick={() => removeMilestone(m.key)}
-                  aria-label={`Remove milestone ${i + 1}`}
-                >
-                  Remove
-                </Button>
+                {i + 1}
+              </span>
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]">
+                  <Field
+                    label={`Milestone ${i + 1} amount`}
+                    htmlFor={`m${m.key}.amount`}
+                    error={err(`m${m.key}.amount`)}
+                  >
+                    <MoneyInput
+                      id={`m${m.key}.amount`}
+                      value={m.amount}
+                      placeholder="250"
+                      onChange={(amount) => setMilestone(m.key, { amount })}
+                      invalid={!!err(`m${m.key}.amount`)}
+                    />
+                  </Field>
+                  <Field label="Due within" htmlFor={`m${m.key}.due`} error={err(`m${m.key}.due`)}>
+                    <DurationInput
+                      id={`m${m.key}.due`}
+                      value={m.due}
+                      onChange={(due) => setMilestone(m.key, { due })}
+                      invalid={!!err(`m${m.key}.due`)}
+                    />
+                  </Field>
+                </div>
+                {(repoSet || m.pr !== "") && (
+                  <Field
+                    label="Pull request number (optional)"
+                    htmlFor={`m${m.key}.pr`}
+                    hint="When you merge this pull request, the payment can be released with a proof from GitHub."
+                    error={err(`m${m.key}.pr`)}
+                  >
+                    <input
+                      id={`m${m.key}.pr`}
+                      inputMode="numeric"
+                      value={m.pr}
+                      placeholder="12"
+                      aria-describedby={`m${m.key}.pr-note`}
+                      onChange={(e) => setMilestone(m.key, { pr: e.target.value })}
+                      className={`${inputClass(!!err(`m${m.key}.pr`))} figures max-w-32`}
+                    />
+                  </Field>
+                )}
+                {count > 1 && (
+                  <Button
+                    kind="quiet"
+                    onClick={() => removeMilestone(m.key)}
+                    className="-ml-3.5"
+                  >
+                    Remove milestone {i + 1}
+                  </Button>
+                )}
               </div>
-            )}
-          </div>
-        ))}
-        {draft.milestones.length < MAX_MILESTONES && (
-          <Button onClick={addMilestone}>Add a milestone</Button>
-        )}
-        <p className="text-xs text-slate-500">
-          Up to {MAX_MILESTONES} milestones per deal.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="font-semibold">Timers</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field
-            label="Time for the freelancer to accept"
-            htmlFor="accept"
-            hint="If they do not accept in time, anyone can cancel and your money comes back."
-            error={err("accept")}
-          >
-            <DurationInput
-              id="accept"
-              value={draft.accept}
-              onChange={(accept) => update({ accept })}
-              invalid={!!err("accept")}
-            />
-          </Field>
-          <Field
-            label="Your time to review each delivery"
-            htmlFor="review"
-            hint="If you say nothing in this time, the freelancer is paid. Silence pays."
-            error={err("review")}
-          >
-            <DurationInput
-              id="review"
-              value={draft.review}
-              onChange={(review) => update({ review })}
-              invalid={!!err("review")}
-            />
-          </Field>
-          <Field
-            label="Time for the arbiters to vote"
-            htmlFor="vote"
-            hint="If two arbiters do not agree in time, the payment is split 50/50."
-            error={err("vote")}
-          >
-            <DurationInput
-              id="vote"
-              value={draft.vote}
-              onChange={(vote) => update({ vote })}
-              invalid={!!err("vote")}
-            />
-          </Field>
+            </li>
+          ))}
+        </ol>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {count < MAX_MILESTONES && (
+            <Button kind="plain" onClick={addMilestone}>
+              Add milestone {count + 1}
+            </Button>
+          )}
+          <span className="text-sm text-ink-soft">
+            {count < MAX_MILESTONES
+              ? `Up to ${MAX_MILESTONES} milestones per deal.`
+              : `${MAX_MILESTONES} milestones is the most a deal can hold.`}
+          </span>
         </div>
-        <p className="text-xs text-slate-500">
-          Every timer is between 10 seconds and 365 days. Very short timers
-          are for trying things out only.
-        </p>
-      </section>
+      </Part>
 
-      <section className="space-y-3">
-        <h3 className="font-semibold">Objection deposit</h3>
+      <Part
+        title="Timers"
+        intro="Every timer runs between 10 seconds and 365 days. Very short timers are for trying things out only."
+      >
         <Field
-          label={`Deposit you lock if you raise an objection (${TUSDC_SYMBOL})`}
+          label="Time for the freelancer to accept"
+          htmlFor="accept"
+          hint="If they do not accept in time, anyone can cancel and your money comes back."
+          error={err("accept")}
+        >
+          <DurationInput
+            id="accept"
+            value={draft.accept}
+            onChange={(accept) => update({ accept })}
+            invalid={!!err("accept")}
+          />
+        </Field>
+        <Field
+          label="Your time to review each delivery"
+          htmlFor="review"
+          hint="If you say nothing in this time, the freelancer is paid."
+          error={err("review")}
+        >
+          <DurationInput
+            id="review"
+            value={draft.review}
+            onChange={(review) => update({ review })}
+            invalid={!!err("review")}
+          />
+        </Field>
+        <Field
+          label="Time for the arbiters to vote"
+          htmlFor="vote"
+          hint="If two arbiters do not agree in time, the payment is split 50/50."
+          error={err("vote")}
+        >
+          <DurationInput
+            id="vote"
+            value={draft.vote}
+            onChange={(vote) => update({ vote })}
+            invalid={!!err("vote")}
+          />
+        </Field>
+      </Part>
+
+      <Part title="Objection deposit">
+        <Field
+          label="Deposit you lock if you object"
           htmlFor="deposit"
           hint="If the arbiters side with the freelancer, the freelancer gets this deposit too. If they side with you, or cannot decide, you get it back."
           error={err("deposit")}
         >
-          <input
-            id="deposit"
-            inputMode="decimal"
-            value={draft.deposit}
-            placeholder="0"
-            onChange={(e) => update({ deposit: e.target.value })}
-            className={`${inputClass(!!err("deposit"))} max-w-40`}
-          />
+          <div className="max-w-44">
+            <MoneyInput
+              id="deposit"
+              value={draft.deposit}
+              placeholder="0"
+              onChange={(v) => update({ deposit: v })}
+              invalid={!!err("deposit")}
+            />
+          </div>
         </Field>
         {deposit === 0n && (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            With a deposit of 0, objections are free. You could object to every
-            delivery without risking anything. A fair deposit protects the
-            freelancer.
-          </p>
+          <Notice tone="clock">
+            With a deposit of 0, objections are free: you could object to every delivery without
+            risking anything. A fair deposit protects the freelancer.
+          </Notice>
         )}
         {deposit !== null && deposit > 0n && (
-          <p className="text-xs text-slate-500">
-            Objecting locks {formatAmount(deposit)} from your balance at that
-            moment.
+          <p className="text-sm text-ink-soft">
+            Objecting locks {formatAmount(deposit)} from your balance at that moment.
           </p>
         )}
-      </section>
+      </Part>
 
-      <section className="space-y-3">
-        <h3 className="font-semibold">GitHub release (optional)</h3>
-        <p className="text-xs text-slate-600">
-          Name a public repository and, for each milestone, the freelancer's
-          open pull request. When you merge that pull request, anyone can
-          prove it on Solana and the payment is released. Merging is your
-          acceptance.
-        </p>
+      <Part
+        title="GitHub release (optional)"
+        intro="Name a public repository and, for each milestone, the freelancer's open pull request. When you merge it, anyone can prove that on Solana and the payment is released. Merging is your acceptance."
+      >
         <Field
-          label='Repository ("owner/name")'
+          label="Repository"
           htmlFor="repo"
+          hint={repoSet ? "Only use a repository where you decide what gets merged." : 'Written as "owner/name".'}
           error={err("repo")}
         >
           <input
             id="repo"
             value={draft.repo}
-            placeholder="e.g. acme/website"
+            placeholder="acme/website"
             spellCheck={false}
+            autoComplete="off"
+            aria-describedby="repo-note"
             onChange={(e) => update({ repo: e.target.value })}
-            className={`${inputClass(!!err("repo"))} max-w-md`}
+            className={`${inputClass(!!err("repo"))} max-w-sm`}
           />
         </Field>
-        {repoSet && (
-          <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
-            Only use a repository where you decide what gets merged.
-          </p>
-        )}
-        <details className="rounded-md border border-slate-200 px-3 py-2">
-          <summary className="cursor-pointer text-sm font-medium">
-            Advanced
+        <details className="group">
+          <summary className="cursor-pointer text-sm font-semibold text-ink-soft hover:text-ink">
+            Advanced: the attestor
           </summary>
           <div className="mt-3">
             <Field
@@ -254,9 +270,9 @@ export function StepTerms({
               htmlFor="attestor"
               hint={
                 <>
-                  The independent service that witnesses what GitHub says.
-                  Default: {DEFAULT_ATTESTOR}. Leave empty to switch the GitHub
-                  release off.
+                  The independent service that witnesses what GitHub says. The default is{" "}
+                  <span className="break-all">{DEFAULT_ATTESTOR}</span>. Leave it empty to switch the
+                  GitHub release off.
                 </>
               }
               error={err("attestor")}
@@ -265,13 +281,15 @@ export function StepTerms({
                 id="attestor"
                 value={draft.attestor}
                 spellCheck={false}
+                autoComplete="off"
+                aria-describedby="attestor-note"
                 onChange={(e) => update({ attestor: e.target.value })}
-                className={`${inputClass(!!err("attestor"))} max-w-md font-mono`}
+                className={`${inputClass(!!err("attestor"))} max-w-md text-sm`}
               />
             </Field>
           </div>
         </details>
-      </section>
+      </Part>
     </div>
   );
 }
