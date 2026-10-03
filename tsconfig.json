@@ -3,13 +3,8 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": [
-      "esnext"
-    ],
-    "types": [
-      "mocha",
-      "node"
-    ],
+    "lib": ["esnext"],
+    "types": ["mocha", "node"],
     "strict": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,

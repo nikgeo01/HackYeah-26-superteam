@@ -14,7 +14,7 @@ import {
 } from "@solana/spl-token";
 import { expect } from "chai";
 import BN from "bn.js";
-import type { MilestoneEscrow } from "../target/types/milestone_escrow.ts";
+import type { MilestoneEscrow } from "../idl/milestone_escrow.ts";
 
 const { Keypair, PublicKey, LAMPORTS_PER_SOL, SYSVAR_CLOCK_PUBKEY } =
   anchor.web3;
