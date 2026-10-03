@@ -58,3 +58,5 @@ This is irreversible and the program's rent can never be reclaimed afterwards.
 |---|---|---|
 | 2026-10-03 14:45 | First deploy, `--max-len 400000` | [tx](https://explorer.solana.com/tx/4d6kyW1uJov9j96CoCNS8mppB9Mm696SZBd7BngfAc5FdqkTTy3UTtkzcTucm3RovLYDz3nEhzikGCWzh498nPfW?cluster=devnet); program data 400,000 bytes, rent 2.03 SOL; upgrade authority `NL9cyJQM8dbGjy5xwe7B1uv9GwfFBUbjHNTD7mGC7ss` |
 | 2026-10-03 14:47 | `node scripts/devnet-smoke.ts` (create → accept → deliver → approve + settle) | Worker paid 10 test tokens; [settle tx](https://explorer.solana.com/tx/64UTuShujonULJAnSRWeDzYB1FwT6Q62tgs6YuWcXcnZkzffzoAQVNa1yFPd8hZTdbFihewu3usAzQZm6F42iFSK?cluster=devnet) |
+| 2026-10-03 15:00 | `anchor idl init` (IDL published on-chain, so explorers decode instructions) | 0.028 SOL |
+| 2026-10-03 14:55 | `node scripts/e2e-devnet.ts` | 7/7 scenarios passed, 0.0043 SOL |
