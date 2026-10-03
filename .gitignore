@@ -1,0 +1,21 @@
+# build output
+target/
+dist/
+node_modules/
+.anchor/
+.surfpool/
+test-ledger/
+**/*.rs.bk
+*.log
+.DS_Store
+.yarn
+
+# secrets and keys: never commit
+.env
+.env.local
+.env.*.local
+.demo/
+keys/
+*-keypair.json
+keypair.json
+id.json
