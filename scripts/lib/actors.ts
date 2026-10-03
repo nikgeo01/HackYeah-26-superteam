@@ -93,15 +93,11 @@ export function loadActorSet(set: SetName): ActorKeys {
   return out;
 }
 
-/** `VITE_DEMO_ACTORS` value: a JSON array of `{ role, label, publicKey, secretKey }`. */
+/** `VITE_DEMO_ACTORS` value: one-line JSON `[{ label, secretKey }, ...]` (Client, Worker, Arbiter 1-3, Passer-by). */
 export function demoActorsEnvValue(entries: ActorEntry[]): string {
+  // The app's contract: `{ label, secretKey }` only, in role order.
   return JSON.stringify(
-    entries.map(({ role, label, publicKey, secretKey }) => ({
-      role,
-      label,
-      publicKey,
-      secretKey,
-    })),
+    entries.map(({ label, secretKey }) => ({ label, secretKey })),
   );
 }
 
