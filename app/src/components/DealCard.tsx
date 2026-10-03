@@ -23,6 +23,7 @@ import {
 import { useActor } from "../providers/ActorProvider";
 import { RoleMark, type RoleShape } from "./RoleSwitcher";
 import { Amount, splitAmount } from "./ui";
+import { Clock } from "./ui/Clock";
 
 /** A demo label (in demo mode) plus the short address, e.g. "Worker (AbCd…WxYz)". */
 export function PartyName({
@@ -287,11 +288,10 @@ export function DealRow({
       <span className="flex flex-col items-end text-right [grid-area:clock] md:items-start md:text-left">
         {deadline && (
           <>
-            <span
-              className={`tnum text-sm font-semibold ${left < 60 ? "text-clock" : "text-ink"}`}
-            >
-              {formatCountdown(left)}
-            </span>
+            <Clock
+              text={formatCountdown(left)}
+              className={`text-sm font-semibold ${left < 60 ? "text-clock" : "text-ink"}`}
+            />
             <span className="text-micro leading-tight text-ink-soft">{deadline.what}</span>
           </>
         )}
