@@ -3,12 +3,14 @@
 import * as anchor from "@anchor-lang/core";
 import { Program } from "@anchor-lang/core";
 import {
+  MINT_SIZE,
   TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccount,
-  createMint,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createInitializeMint2Instruction,
+  createMintToInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
-  mintTo,
+  getMinimumBalanceForRentExemptMint,
 } from "@solana/spl-token";
 import { expect } from "chai";
 import BN from "bn.js";
@@ -65,21 +67,10 @@ async function fundedKeypair(): Promise<Keypair> {
 export async function setupEnv(): Promise<Env> {
   const [client, worker, j0, j1, j2, stranger, mintAuthority] =
     await Promise.all(Array.from({ length: 7 }, fundedKeypair));
-  const mint = await createMint(
-    connection,
-    mintAuthority,
-    mintAuthority.publicKey,
-    null,
-    DECIMALS,
-  );
-  for (const owner of [client, worker]) {
-    await createAssociatedTokenAccount(
-      connection,
-      mintAuthority,
-      mint,
-      owner.publicKey,
-    );
-  }
+  // Token setup goes through the Anchor provider rather than spl-token's
+  // helpers: their blockhash handling breaks once tests have moved the clock.
+  const mintKp = Keypair.generate();
+  const mint = mintKp.publicKey;
   const env: Env = {
     client,
     worker,
@@ -89,14 +80,32 @@ export async function setupEnv(): Promise<Env> {
     mintAuthority,
     ata: (owner) => getAssociatedTokenAddressSync(mint, owner),
   };
-  await mintTo(
-    connection,
-    mintAuthority,
-    mint,
-    env.ata(client.publicKey),
-    mintAuthority,
-    1_000n * UNIT,
+  const payer = mintAuthority.publicKey;
+  const tx = new anchor.web3.Transaction().add(
+    anchor.web3.SystemProgram.createAccount({
+      fromPubkey: payer,
+      newAccountPubkey: mint,
+      lamports: await getMinimumBalanceForRentExemptMint(connection),
+      space: MINT_SIZE,
+      programId: TOKEN_PROGRAM_ID,
+    }),
+    createInitializeMint2Instruction(mint, DECIMALS, payer, null),
+    ...[client, worker].map((owner) =>
+      createAssociatedTokenAccountIdempotentInstruction(
+        payer,
+        env.ata(owner.publicKey),
+        owner.publicKey,
+        mint,
+      ),
+    ),
+    createMintToInstruction(
+      mint,
+      env.ata(client.publicKey),
+      payer,
+      1_000n * UNIT,
+    ),
   );
+  await provider.sendAndConfirm(tx, [mintAuthority, mintKp]);
   return env;
 }
 
