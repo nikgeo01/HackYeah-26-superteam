@@ -203,4 +203,4 @@ limited things. Timers are short for the demo. Full list:
 
 ## Team
 
-TODO(team: team name and members)
+**Sector A**: Nikola Georgiev and Boyan Gerasimov.
