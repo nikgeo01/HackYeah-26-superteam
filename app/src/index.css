@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Keep the wallet-adapter button in line with the header. */
+.wallet-adapter-button-trigger {
+  height: 2.25rem;
+  font-size: 0.875rem;
+  padding: 0 1rem;
+  background-color: #4f46e5;
+}
