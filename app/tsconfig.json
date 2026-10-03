@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client", "node"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@client/*": ["../client/*"],
+      "@solana/web3.js": ["./node_modules/@solana/web3.js"],
+      "@anchor-lang/core": ["./node_modules/@anchor-lang/core"],
+      "bn.js": ["./node_modules/@types/bn.js"]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts",
+    "../client/pdas.ts",
+    "../client/rules.ts"
+  ]
+}
