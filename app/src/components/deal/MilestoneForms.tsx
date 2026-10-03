@@ -150,7 +150,7 @@ export function LinkPullRequestForm({
 
   if (!open)
     return (
-      <Btn variant="ghost" onClick={() => setOpen(true)} data-preview-ok>
+      <Btn variant="ghost" className="-ml-3.5" onClick={() => setOpen(true)} data-preview-ok>
         Link a pull request
       </Btn>
     );

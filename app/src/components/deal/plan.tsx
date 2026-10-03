@@ -234,7 +234,13 @@ export function planMilestone(
     if (left > 0) {
       // The row's large review clock says what happens next, and when.
       plan.sentence = null;
-      plan.next = { at: m.reviewDeadline, text: `milestone ${n} is paid to the freelancer unless the client objects` };
+      plan.next = {
+        at: m.reviewDeadline,
+        text:
+          role === "worker"
+            ? `you are paid for milestone ${n} unless the client objects`
+            : `milestone ${n} is paid to the freelancer unless the client objects`,
+      };
     } else if (!ready) {
       plan.progress = 1;
       plan.waiting = true;

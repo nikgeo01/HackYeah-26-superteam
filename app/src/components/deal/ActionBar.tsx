@@ -116,7 +116,11 @@ function Block({
     <Notice tone={tone} className="space-y-3 py-4 sm:px-5">
       <div className="space-y-1">
         {tone === "move" && <p className="text-sm font-semibold text-stamp">Your move</p>}
-        <p className="max-w-[68ch] text-lead font-semibold leading-snug text-ink">{title}</p>
+        <p
+          className={`max-w-[68ch] font-semibold leading-snug text-ink ${tone === "move" ? "text-lead" : "text-body"}`}
+        >
+          {title}
+        </p>
         {hint && <p className="max-w-[68ch] text-sm text-ink-soft">{hint}</p>}
       </div>
       {children}
@@ -132,6 +136,7 @@ export function YourMove({
   featured,
   next,
   setSlot,
+  idleHidden = false,
 }: {
   deal: DealView;
   role: Role;
@@ -143,6 +148,8 @@ export function YourMove({
   next: NextEvent | null;
   /** Receives the element a milestone renders its buttons into. */
   setSlot: (el: HTMLElement | null) => void;
+  /** True when another block (an incoming cancel request) already is the viewer's move. */
+  idleHidden?: boolean;
 }) {
   const program = useProgram();
   const { connection } = useConnection();
@@ -348,6 +355,7 @@ export function YourMove({
     );
 
   // ---- Nothing to do: say what happens next, and when.
+  if (idleHidden) return null;
   const soon = next !== null && next.at - now < 60;
   return (
     <Block

@@ -3,7 +3,7 @@
 // the dev-only states preview can render it from fixtures.
 import { useCallback, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
-import type { DealView, Role } from "../../lib/deals";
+import { cancelRequests, type DealView, type Role } from "../../lib/deals";
 import { Sheet } from "../ui";
 import { YourMove, dealLevelMove, type Finished } from "./ActionBar";
 import { CancelBanner } from "./CancelBanner";
@@ -55,6 +55,11 @@ export function DealSheet({
   const featuredShown =
     !openBlock && featured !== null && (featured.move.personal || !levels.includes("withdraw"));
   const moveIndex = featuredShown && featured ? featured.index : -1;
+  const asked = cancelRequests(deal);
+  const incomingCancel =
+    deal.status === "active" &&
+    ((role === "client" && asked.worker && !asked.client) ||
+      (role === "worker" && asked.client && !asked.worker));
 
   return (
     <Sheet as="article" className="px-4 py-6 sm:px-8 sm:py-8">
@@ -69,6 +74,7 @@ export function DealSheet({
           featured={featuredShown ? featured : null}
           next={next}
           setSlot={setSlot}
+          idleHidden={incomingCancel}
         />
         <CancelBanner deal={deal} role={role} />
       </div>

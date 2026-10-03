@@ -96,6 +96,7 @@ export function CancelBanner({
     return (
       <Notice tone="move" className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-[60ch]">
+          <span className="block text-sm font-semibold text-stamp">Your move</span>
           <strong>The {other} asked to cancel.</strong> Undecided milestones would be refunded to{" "}
           {role === "client" ? "you" : "the client"}. Milestones already approved or decided still
           go to whoever won them.

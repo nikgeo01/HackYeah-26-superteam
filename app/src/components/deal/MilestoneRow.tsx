@@ -245,6 +245,7 @@ export function MilestoneRow({
   const mine = arbiterSlot >= 0 ? m.votes[arbiterSlot] : VOTE_NONE;
   const amount = splitAmount(formatAmount(m.amount));
   const settled = m.status === "settled";
+  const byRule = settled && receipt?.kind === "silence";
 
   return (
     <li
@@ -269,7 +270,7 @@ export function MilestoneRow({
               </p>
             )}
           </div>
-          {plan.stamp && (
+          {plan.stamp && !byRule && (
             <Stamp land={settled && sawUnsettled} tone={m.outcome === "cancelled" ? "ink" : "stamp"} className="mr-1 mt-1 [&>span]:px-3.5 [&>span]:py-1.5 [&>span]:text-[0.95rem]">
               {plan.stamp}
             </Stamp>
@@ -292,7 +293,19 @@ export function MilestoneRow({
           </p>
         )}
 
-        {settled && <SettledReceipt receipt={receipt} />}
+        {byRule && receipt ? (
+          // The payoff of the release moment: the stamp lands next to who signed it.
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[var(--radius-sheet)] border border-stamp/40 px-5 py-5 sm:px-6">
+            <Stamp land={sawUnsettled} tilt={-5} className="[&>span]:px-4 [&>span]:py-2 [&>span]:text-[1.2rem]">
+              {plan.stamp}
+            </Stamp>
+            <div className="min-w-0 flex-1 basis-64">
+              <PaidByRule receipt={receipt} />
+            </div>
+          </div>
+        ) : (
+          settled && <SettledReceipt receipt={receipt} />
+        )}
 
         {m.status === "submitted" && (
           <p className="text-micro text-ink-soft">
