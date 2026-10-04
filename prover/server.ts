@@ -64,6 +64,18 @@ setInterval(() => {
     if (times.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(ip);
 }, RATE_WINDOW_MS).unref();
 
+// Behind a hosting proxy (TRUST_PROXY=1) every request comes from the proxy, so the
+// rate limit keys on the first X-Forwarded-For address instead.
+const TRUST_PROXY = env.optional("TRUST_PROXY") === "1";
+function clientIp(req: IncomingMessage): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
+    ?.split(",")[0]
+    ?.trim();
+  if (TRUST_PROXY && first) return first;
+  return req.socket.remoteAddress ?? "unknown";
+}
+
 function cors(req: IncomingMessage, res: ServerResponse): void {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
@@ -134,7 +146,7 @@ const server = createServer(async (req, res) => {
     send(res, 404, { error: "POST /prove { deal, index }" });
     return;
   }
-  const ip = req.socket.remoteAddress ?? "unknown";
+  const ip = clientIp(req);
   if (rateLimited(ip)) {
     send(res, 429, { error: "too many requests; try again later" });
     return;
