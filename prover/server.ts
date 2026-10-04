@@ -6,6 +6,8 @@
 // stored in that deal, so it can only ever request a deal's own pull request.
 // It ENFORCES NOTHING: the program verifies every proof itself and rejects one
 // that does not match the deal. Delete this service and nothing becomes unsafe.
+// Each proof costs Reclaim quota, so it first checks for free that the milestone
+// can still take a proof and that GitHub already reports the PR merged.
 // It holds RECLAIM_APP_SECRET and GITHUB_PAT and never returns either.
 import {
   createServer,
@@ -13,7 +15,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { PublicKey } from "@solana/web3.js";
-import { proveMilestone } from "../client/proof.ts";
+import { proofTarget, proveMilestone } from "../client/proof.ts";
 import { errorMessage } from "../scripts/lib/log.ts";
 import { env } from "../scripts/lib/env.ts";
 import { connect, loadProgram } from "../scripts/lib/program.ts";
@@ -38,6 +40,41 @@ const secrets = [creds.appSecret, creds.githubToken].filter((s): s is string =>
   Boolean(s),
 );
 const program = loadProgram(connect());
+
+/** Thrown when a request is refused before any proof is spent. */
+class Refused extends Error {}
+
+/**
+ * Free checks before spending a proof: the deal and milestone still accept one
+ * (the same states `submit_proof` allows) and GitHub reports the PR as merged.
+ */
+async function precheck(deal: PublicKey, index: number): Promise<void> {
+  const account = await program.account.deal.fetch(deal);
+  const target = proofTarget(deal, account, index);
+  if (!("active" in account.status))
+    throw new Refused("this deal is not active, so no proof is needed.");
+  const status = account.milestones[index].status;
+  if (!("pending" in status || "submitted" in status || "disputed" in status))
+    throw new Refused("this milestone is already decided or paid.");
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "kept-prover",
+  };
+  if (creds.githubToken) headers.Authorization = `Bearer ${creds.githubToken}`;
+  const res = await fetch(
+    `https://api.github.com/repos/${target.repo}/pulls/${target.pr}`,
+    { headers },
+  );
+  if (res.status === 404)
+    throw new Refused(
+      `there is no pull request #${target.pr} in ${target.repo}.`,
+    );
+  if (!res.ok) throw new Error(`GitHub answered HTTP ${res.status}`);
+  const pull = (await res.json()) as { merged?: boolean };
+  if (!pull.merged)
+    throw new Refused(`pull request #${target.pr} is not merged yet.`);
+}
 
 /** Removes any secret from text that leaves the process (responses and logs). */
 function scrub(text: string): string {
@@ -157,6 +194,23 @@ const server = createServer(async (req, res) => {
     input = parseRequest(await readBody(req));
   } catch (error) {
     send(res, 400, { error: `bad request: ${errorMessage(error)}` });
+    return;
+  }
+
+  try {
+    await precheck(input.deal, input.index);
+  } catch (error) {
+    const message = scrub(errorMessage(error));
+    console.log(
+      `refused ${input.deal.toBase58()}#${input.index} before proving: ${message}`,
+    );
+    const status =
+      error instanceof Refused
+        ? 409
+        : /Account does not exist|has no (milestone|pull request)/.test(message)
+          ? 404
+          : 502;
+    send(res, status, { error: message });
     return;
   }
 
